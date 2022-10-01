@@ -1,0 +1,24 @@
+{
+  "name": "omikuji-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.30",
+    "dayjs": "^1.11.5",
+    "discord.js": "^14.5.0",
+    "dotenv": "^16.0.3",
+    "sequelize": "^6.23.2",
+    "sqlite3": "^5.1.1",
+    "typescript": "^4.8.4"
+  },
+  "devDependencies": {
+    "eslint": "^8.24.0"
+  }
+}
