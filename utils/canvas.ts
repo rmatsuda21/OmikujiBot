@@ -21,14 +21,14 @@ export const createImage = (unsei: string) => {
   ctx.strokeStyle = "#fff";
 
   const headerFont = fontSize / 3.4;
-  ctx.font = `${headerFont}px Kiwi Maru`;
+  ctx.font = `${headerFont}px ZenMaruRegular`;
   ctx.fillText(
     "今日の運勢",
     canvas.width / 2 - 5 * (headerFont / 2),
     canvas.height / 4 + headerFont / 2
   );
 
-  ctx.font = `${fontSize}px KiwiMaru`;
+  ctx.font = `${fontSize}px ZenMaruBlack`;
   ctx.fillText(
     unsei,
     canvas.width / 2 - unsei.length * (fontSize / 2),

@@ -72,7 +72,10 @@ client.on("interactionCreate", async (interaction) => {
         { name: "profile-image.png" }
       );
 
-      await interaction.reply({ files: [attachment] });
+      await interaction.reply({
+        content: `Hi <@${user.id}>`,
+        files: [attachment],
+      });
       break;
     default:
       await interaction.reply("Unknown Command!");
