@@ -4,12 +4,18 @@ import { Client, GatewayIntentBits, AttachmentBuilder } from "discord.js";
 import { GlobalFonts } from "@napi-rs/canvas";
 import dayjs from "dayjs";
 
-// import { Omikuji } from "./utils/db";
-import { drawMikuji } from "./utils/omikuji";
+import { Omikuji } from "./utils/db";
+import { drawMikuji, getLuckyColor } from "./utils/omikuji";
 import { createImage } from "./utils/canvas";
+
+getLuckyColor();
 
 // Setup
 config();
+GlobalFonts.registerFromPath(
+  join(__dirname, "fonts", "Zen_Maru_Gothic", "ZenMaruGothic-Light.ttf"),
+  "ZenMaruLight"
+);
 GlobalFonts.registerFromPath(
   join(__dirname, "fonts", "Zen_Maru_Gothic", "ZenMaruGothic-Regular.ttf"),
   "ZenMaruRegular"
@@ -28,7 +34,7 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 // When the client is ready, run this code (only once)
 client.once("ready", () => {
-  // Omikuji.sync({ force: true });
+  Omikuji.sync({ force: true });
   console.log("Ready!");
 });
 
@@ -39,36 +45,36 @@ client.on("interactionCreate", async (interaction) => {
 
   switch (commandName) {
     case "おみくじ":
-      // const tryFind = await Omikuji.findOne({
-      //   where: { user_id: user.id },
-      // });
+      const tryFind = await Omikuji.findOne({
+        where: { user_id: user.id },
+      });
 
-      // if (tryFind) {
-      //   const previousDate = dayjs(tryFind.getDataValue("last_pick"));
-      //   const currentDate = dayjs();
+      if (tryFind) {
+        const previousDate = dayjs(tryFind.getDataValue("last_pick"));
+        const currentDate = dayjs();
 
-      //   const hasDrawnToday =
-      //     previousDate.month === currentDate.month &&
-      //     previousDate.date === currentDate.date;
+        const hasDrawnToday =
+          previousDate.month === currentDate.month &&
+          previousDate.date === currentDate.date;
 
-      //   if (hasDrawnToday) {
-      //     await interaction.reply(
-      //       "今日のおみくじはすでに引きました！\n又明日おみくじを引きに来てください。"
-      //     );
+        if (hasDrawnToday) {
+          await interaction.reply(
+            "今日のおみくじはすでに引きました！\n又明日おみくじを引きに来てください。"
+          );
 
-      //     return;
-      //   } else {
-      //     tryFind.setAttributes("last_pick", currentDate.toString());
-      //   }
-      // } else {
-      //   await Omikuji.create({
-      //     user_id: user.id,
-      //     last_pick: dayjs().toString(),
-      //   });
-      // }
+          return;
+        }
+
+        tryFind.setAttributes("last_pick", currentDate.toString());
+      } else {
+        await Omikuji.create({
+          user_id: user.id,
+          last_pick: dayjs().toString(),
+        });
+      }
 
       const attachment = new AttachmentBuilder(
-        await createImage(drawMikuji(user.id)),
+        await createImage(drawMikuji()),
         { name: "profile-image.png" }
       );
 
