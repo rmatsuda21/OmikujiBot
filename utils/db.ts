@@ -1,6 +1,16 @@
-import { Sequelize, DataTypes } from "sequelize";
-const { colors }: { colors: string[] } = require("../data/luckyColor.json");
-const { items }: { items: string[] } = require("../data/luckyItem.json");
+import { Sequelize, DataTypes, QueryTypes } from "sequelize";
+
+interface IItems {
+  item: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface IColors {
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // Create database
 const sequelize = new Sequelize("database", "user", "password", {
@@ -11,6 +21,7 @@ const sequelize = new Sequelize("database", "user", "password", {
   storage: "database.sqlite",
 });
 
+// DB to store user data
 const Omikuji = sequelize.define("omikuji", {
   user_id: {
     type: DataTypes.STRING,
@@ -22,57 +33,70 @@ const Omikuji = sequelize.define("omikuji", {
   },
 });
 
-const LuckyColor = sequelize.define("luckycolor", {
+// DB to store Lucky Colors
+const LuckyColor = sequelize.define("luckycolors", {
   color: {
     type: DataTypes.STRING,
     primaryKey: true,
   },
 });
 
-const LuckyItem = sequelize.define("luckyitem", {
-  item_name: {
+// DB to store Lucky Items
+const LuckyItem = sequelize.define("luckyitems", {
+  item: {
     type: DataTypes.STRING,
     primaryKey: true,
   },
 });
 
-// const getRandomColor = () => [
-//   LuckyColor.findAll({ order: Sequelize.literal("rand()"), limit: 5 }).then(
-//     (colors) => {
-//       console.log(colors);
-//     }
-//   ),
-// ];
-
-// const getRandomItem = () => [
-//   LuckyItem.findAll({ order: Sequelize.literal("rand()"), limit: 5 }).then(
-//     (items) => {
-//       console.log(items);
-//     }
-//   ),
-// ];
-
-// Seed
-const setSeed = async () => {
-  const tables = await sequelize.getQueryInterface().showAllTables();
-  console.log(tables);
-  // await LuckyColor.bulkCreate(
-  //   colors.map((color) => {
-  //     return { color };
-  //   })
-  // );
-  // await LuckyItem.bulkCreate(
-  //   items.map((item) => {
-  //     return { item_name: item };
-  //   })
-  // );
-  // const item = await LuckyItem.findOne({
-  //   where: { item_name: "やっすいリップ" },
-  // });
-  // console.log(item instanceof LuckyItem);
-  // console.log(item.item_name);
+// Get random color from db
+const getRandomColor = async () => {
+  const results = (await sequelize.query(
+    "SELECT * FROM luckycolors ORDER BY RANDOM() LIMIT 1;",
+    { type: QueryTypes.SELECT }
+  )) as IColors[];
+  return results[0].color;
 };
 
-setSeed();
+// Get random item from db
+const getRandomItem = async () => {
+  const results = (await sequelize.query(
+    "SELECT * FROM luckyitems ORDER BY RANDOM() LIMIT 1;",
+    { type: QueryTypes.SELECT }
+  )) as IItems[];
+  return results[0].item;
+};
 
-export { Omikuji, LuckyColor, LuckyItem };
+// Add color to db
+const addLuckyColor = async (color: string, interaction) => {
+  try {
+    const newColor = await LuckyColor.create({ color });
+    console.log("New Color:", newColor);
+    interaction.reply("Made!");
+  } catch (error) {
+    console.log(error.original);
+    interaction.reply("Error!");
+  }
+};
+
+// Add color to db
+const addLuckyItem = async (item: string, interaction) => {
+  try {
+    const newItem = await LuckyItem.create({ item });
+    console.log("New Item:", newItem);
+    interaction.reply("Made!");
+  } catch (error) {
+    console.log(error.original);
+    interaction.reply("Error!");
+  }
+};
+
+export {
+  Omikuji,
+  LuckyColor,
+  LuckyItem,
+  getRandomItem,
+  getRandomColor,
+  addLuckyColor,
+  addLuckyItem,
+};

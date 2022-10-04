@@ -1,16 +1,19 @@
 import { createCanvas } from "@napi-rs/canvas";
+import { getRandomColor, getRandomItem } from "./db";
 
 const COLORS = {
   WHITE: "#F4EDE1",
   BLACK: "#000",
+  RED: "#F71515",
 };
 
 const FONT_REGULAR = (fontSize) => `${fontSize}px ZenMaruRegular`;
 const FONT_BOLD = (fontSize) => `${fontSize}px ZenMaruBold`;
 const FONT_BLACK = (fontSize) => `${fontSize}px ZenMaruBlack`;
 const FONT_LIGHT = (fontSize) => `${fontSize}px ZenMaruLight`;
+const FONT_CHINESE = (fontSize) => `${fontSize}px HuangYou`;
 
-type FONT_STYLE = "LIGHT" | "REGULAR" | "BOLD" | "BLACK";
+type FONT_STYLE = "LIGHT" | "REGULAR" | "BOLD" | "BLACK" | "CHINESE";
 
 const CANVAS_WIDTH = 800,
   CANVAS_HEIGHT = 1800;
@@ -30,7 +33,7 @@ const drawVerticalText = (
     drawText(
       text.charAt(i),
       x,
-      y + fontSize * i,
+      y + ctx.measureText(text.charAt(i)).width * i,
       fontSize,
       fontWidth,
       fillSyle
@@ -60,10 +63,13 @@ const drawText = (
     case "LIGHT":
       ctx.font = FONT_LIGHT(fontSize);
       break;
+    case "CHINESE":
+      ctx.font = FONT_CHINESE(fontSize);
+      break;
   }
   ctx.fillStyle = fillSyle;
 
-  let newX = leftAlign ? x : x - text.length * (fontSize / 2);
+  let newX = leftAlign ? x : x - ctx.measureText(text).width / 2;
   ctx.fillText(text, newX, y + fontSize / 2);
 };
 
@@ -102,7 +108,7 @@ const drawLine = (
   ctx.stroke();
 };
 
-export const createImage = (unsei: string) => {
+export const createImage = async (unsei: string) => {
   const { width, height } = canvas;
 
   // Set background
@@ -152,8 +158,22 @@ export const createImage = (unsei: string) => {
 
   // Title
   const ICON_RADIUS = CENTER_TITLE_WIDTH / 2 - 30;
-  drawCircle(width / 2, STORY_HEIGHT + ICON_RADIUS + 40, ICON_RADIUS, 6);
-  drawText("神", width / 2, STORY_HEIGHT + ICON_RADIUS + 30, 100, "LIGHT");
+  drawCircle(
+    width / 2,
+    STORY_HEIGHT + ICON_RADIUS + 40,
+    ICON_RADIUS,
+    6,
+    COLORS.WHITE,
+    COLORS.RED
+  );
+  drawText(
+    "神",
+    width / 2,
+    STORY_HEIGHT + ICON_RADIUS + 30,
+    100,
+    "CHINESE",
+    COLORS.WHITE
+  );
   drawVerticalText(
     "本音みくじ",
     width / 2,
@@ -264,7 +284,7 @@ export const createImage = (unsei: string) => {
     true
   );
   drawText(
-    "",
+    await getRandomItem(),
     width / 2,
     (LUCKY_COLOR_HEIGHT - CONTENT_HEIGHT) / 2 + CONTENT_HEIGHT,
     90,
@@ -281,7 +301,13 @@ export const createImage = (unsei: string) => {
     COLORS.BLACK,
     true
   );
-  drawText("", width / 2, LUCKY_COLOR_HEIGHT + 120, 90, "BLACK");
+  drawText(
+    await getRandomColor(),
+    width / 2,
+    LUCKY_COLOR_HEIGHT + 120,
+    90,
+    "BLACK"
+  );
 
   return canvas.encode("png");
 };

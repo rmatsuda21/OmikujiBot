@@ -8,10 +8,22 @@ const commands = [
     .setDescription("おみくじを引く！"),
   new SlashCommandBuilder()
     .setName("ラッキーアイテム追加")
-    .setDescription("ラッキーアイテムを追加する"),
+    .setDescription("ラッキーアイテムを追加する")
+    .addStringOption((item) =>
+      item
+        .setName("アイテム名")
+        .setDescription("追加したいラッキーアイテムの名前")
+        .setRequired(true)
+    ),
   new SlashCommandBuilder()
     .setName("ラッキーカラー追加")
-    .setDescription("ラッキーカラーを追加する"),
+    .setDescription("ラッキーカラーを追加する")
+    .addStringOption((color) =>
+      color
+        .setName("カラー名")
+        .setDescription("追加したいラッキーカラーの名前")
+        .setRequired(true)
+    ),
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: "10" }).setToken(BOT_TOKEN);

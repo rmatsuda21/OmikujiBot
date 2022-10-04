@@ -5,9 +5,8 @@ import { Omikuji } from "./db";
 
 const unseiList = ["大吉", "吉", "中吉", "小吉", "末吉", "凶", "大凶"];
 
-export const drawMikuji = async (interaction, user_id) => {
-  const unsei = unseiList[Math.floor(Math.random() * unseiList.length)];
-
+// Has the given user already drawn an mikuji today?
+const hasDrawnToday = async (interaction, user_id): Promise<boolean> => {
   const tryFind = await Omikuji.findOne({
     where: { user_id: user_id },
   });
@@ -25,7 +24,7 @@ export const drawMikuji = async (interaction, user_id) => {
         "今日のおみくじはすでに引きました！\n又明日おみくじを引きに来てください。"
       );
 
-      return;
+      return true;
     }
 
     tryFind.setAttributes("last_pick", currentDate.toString());
@@ -35,6 +34,15 @@ export const drawMikuji = async (interaction, user_id) => {
       last_pick: dayjs().toString(),
     });
   }
+
+  return false;
+};
+
+export const drawMikuji = async (interaction, user_id) => {
+  const unsei = unseiList[Math.floor(Math.random() * unseiList.length)];
+
+  if (process.env.DEV !== "true" && (await hasDrawnToday(interaction, user_id)))
+    return;
 
   const attachment = new AttachmentBuilder(await createImage(unsei), {
     name: "profile-image.png",
