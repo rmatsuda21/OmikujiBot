@@ -1,14 +1,10 @@
 import { config } from "dotenv";
 import { join } from "path";
-import { Client, GatewayIntentBits, AttachmentBuilder } from "discord.js";
+import { Client, GatewayIntentBits } from "discord.js";
 import { GlobalFonts } from "@napi-rs/canvas";
-import dayjs from "dayjs";
 
-import { Omikuji } from "./utils/db";
-import { drawMikuji, getLuckyColor } from "./utils/omikuji";
-import { createImage } from "./utils/canvas";
-
-getLuckyColor();
+import { LuckyColor, LuckyItem, Omikuji } from "./utils/db";
+import { drawMikuji } from "./utils/omikuji";
 
 // Setup
 config();
@@ -33,8 +29,8 @@ GlobalFonts.registerFromPath(
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 // When the client is ready, run this code (only once)
-client.once("ready", () => {
-  Omikuji.sync({ force: true });
+client.once("ready", async () => {
+  await Promise.all([Omikuji.sync(), LuckyColor.sync(), LuckyItem.sync()]);
   console.log("Ready!");
 });
 
@@ -45,43 +41,7 @@ client.on("interactionCreate", async (interaction) => {
 
   switch (commandName) {
     case "おみくじ":
-      const tryFind = await Omikuji.findOne({
-        where: { user_id: user.id },
-      });
-
-      if (tryFind) {
-        const previousDate = dayjs(tryFind.getDataValue("last_pick"));
-        const currentDate = dayjs();
-
-        const hasDrawnToday =
-          previousDate.month === currentDate.month &&
-          previousDate.date === currentDate.date;
-
-        if (hasDrawnToday) {
-          await interaction.reply(
-            "今日のおみくじはすでに引きました！\n又明日おみくじを引きに来てください。"
-          );
-
-          return;
-        }
-
-        tryFind.setAttributes("last_pick", currentDate.toString());
-      } else {
-        await Omikuji.create({
-          user_id: user.id,
-          last_pick: dayjs().toString(),
-        });
-      }
-
-      const attachment = new AttachmentBuilder(
-        await createImage(drawMikuji()),
-        { name: "profile-image.png" }
-      );
-
-      await interaction.reply({
-        content: `Hi <@${user.id}>`,
-        files: [attachment],
-      });
+      drawMikuji(interaction, user.id);
       break;
     default:
       await interaction.reply("Unknown Command!");

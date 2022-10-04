@@ -1,5 +1,4 @@
 import { createCanvas } from "@napi-rs/canvas";
-import { getLuckyColor, getLuckyItem } from "./omikuji";
 
 const COLORS = {
   WHITE: "#F4EDE1",
@@ -265,7 +264,7 @@ export const createImage = (unsei: string) => {
     true
   );
   drawText(
-    getLuckyItem(),
+    "",
     width / 2,
     (LUCKY_COLOR_HEIGHT - CONTENT_HEIGHT) / 2 + CONTENT_HEIGHT,
     90,
@@ -282,7 +281,7 @@ export const createImage = (unsei: string) => {
     COLORS.BLACK,
     true
   );
-  drawText(getLuckyColor(), width / 2, LUCKY_COLOR_HEIGHT + 120, 90, "BLACK");
+  drawText("", width / 2, LUCKY_COLOR_HEIGHT + 120, 90, "BLACK");
 
   return canvas.encode("png");
 };

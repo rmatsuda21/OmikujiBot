@@ -1,18 +1,49 @@
-const { colors } = require("../data/luckyColor.json");
-const { items } = require("../data/luckyItem.json");
+import dayjs from "dayjs";
+import { AttachmentBuilder } from "discord.js";
+import { createImage } from "./canvas";
+import { Omikuji } from "./db";
+
 const unseiList = ["大吉", "吉", "中吉", "小吉", "末吉", "凶", "大凶"];
 
-export const drawMikuji = () => {
+export const drawMikuji = async (interaction, user_id) => {
   const unsei = unseiList[Math.floor(Math.random() * unseiList.length)];
+
+  const tryFind = await Omikuji.findOne({
+    where: { user_id: user_id },
+  });
+
+  if (tryFind) {
+    const previousDate = dayjs(tryFind.getDataValue("last_pick"));
+    const currentDate = dayjs();
+
+    const hasDrawnToday =
+      previousDate.month === currentDate.month &&
+      previousDate.date === currentDate.date;
+
+    if (hasDrawnToday) {
+      await interaction.reply(
+        "今日のおみくじはすでに引きました！\n又明日おみくじを引きに来てください。"
+      );
+
+      return;
+    }
+
+    tryFind.setAttributes("last_pick", currentDate.toString());
+  } else {
+    await Omikuji.create({
+      user_id: user_id,
+      last_pick: dayjs().toString(),
+    });
+  }
+
+  const attachment = new AttachmentBuilder(await createImage(unsei), {
+    name: "profile-image.png",
+  });
+
+  await interaction.reply({
+    content: `Hi <@${user_id}>`,
+    files: [attachment],
+  });
+
   return unsei;
-};
-
-export const getLuckyColor = () => {
-  const color = colors[Math.floor(Math.random() * colors.length)];
-  return color;
-};
-
-export const getLuckyItem = () => {
-  const color = items[Math.floor(Math.random() * items.length)];
-  return color;
 };
