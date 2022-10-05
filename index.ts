@@ -42,21 +42,26 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 // When the client is ready, run this code (only once)
 client.once("ready", async () => {
-  await Promise.all([
-    Omikuji.sync({ force: true }),
-    LuckyColor.sync({ force: true }),
-    LuckyItem.sync({ force: true }),
-  ]);
-  await LuckyColor.bulkCreate(
-    colors.map((color) => {
-      return { color };
-    })
-  );
-  await LuckyItem.bulkCreate(
-    items.map((item) => {
-      return { item: item };
-    })
-  );
+  if (process.env.DEV === "true") {
+    await Promise.all([
+      Omikuji.sync({ force: true }),
+      LuckyColor.sync({ force: true }),
+      LuckyItem.sync({ force: true }),
+    ]);
+
+    await LuckyColor.bulkCreate(
+      colors.map((color) => {
+        return { color };
+      })
+    );
+    await LuckyItem.bulkCreate(
+      items.map((item) => {
+        return { item: item };
+      })
+    );
+  } else {
+    await Promise.all([Omikuji.sync(), LuckyColor.sync(), LuckyItem.sync()]);
+  }
 
   console.log("Ready!");
 });
