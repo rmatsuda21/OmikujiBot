@@ -145,7 +145,13 @@ export const createImage = async (unsei: string) => {
   drawLine(0, LUCKY_COLOR_HEIGHT, width, LUCKY_COLOR_HEIGHT, BORDER_WIDTH);
 
   // Header
-  drawText("大吉だと思ってるの？", width / 2, HEADER_HEIGHT / 2, 70, "BLACK");
+  drawText(
+    `${unsei}だと思ってるの？`,
+    width / 2,
+    HEADER_HEIGHT / 2,
+    70,
+    "BLACK"
+  );
 
   // Story
   drawText(

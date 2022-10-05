@@ -1,5 +1,9 @@
 import dayjs from "dayjs";
-import { AttachmentBuilder } from "discord.js";
+import {
+  AttachmentBuilder,
+  CacheType,
+  ChatInputCommandInteraction,
+} from "discord.js";
 import { createImage } from "./canvas";
 import { Omikuji } from "./db";
 
@@ -38,7 +42,10 @@ const hasDrawnToday = async (interaction, user_id): Promise<boolean> => {
   return false;
 };
 
-export const drawMikuji = async (interaction, user_id) => {
+export const drawMikuji = async (
+  interaction: ChatInputCommandInteraction<CacheType>,
+  user_id: string
+) => {
   const unsei = unseiList[Math.floor(Math.random() * unseiList.length)];
 
   if (process.env.DEV !== "true" && (await hasDrawnToday(interaction, user_id)))
@@ -48,10 +55,12 @@ export const drawMikuji = async (interaction, user_id) => {
     name: "profile-image.png",
   });
 
-  await interaction.reply({
-    content: `Hi <@${user_id}>`,
-    files: [attachment],
-  });
-
-  return unsei;
+  await interaction
+    .reply({
+      content: `Hi <@${user_id}>`,
+      files: [attachment],
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 };

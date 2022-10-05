@@ -68,13 +68,19 @@ client.on("interactionCreate", async (interaction) => {
 
   switch (commandName) {
     case "おみくじ":
-      drawMikuji(interaction, user.id);
+      await drawMikuji(interaction, user.id);
       break;
     case "ラッキーカラー追加":
-      addLuckyColor(interaction.options.getString("カラー名"), interaction);
+      await addLuckyColor(
+        interaction.options.getString("カラー名"),
+        interaction
+      );
       break;
     case "ラッキーアイテム追加":
-      addLuckyItem(interaction.options.getString("アイテム名"), interaction);
+      await addLuckyItem(
+        interaction.options.getString("アイテム名"),
+        interaction
+      );
       break;
     default:
       await interaction.reply("Unknown Command!");
