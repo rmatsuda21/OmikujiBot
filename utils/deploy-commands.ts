@@ -24,6 +24,12 @@ const commands = [
         .setDescription("追加したいラッキーカラーの名前")
         .setRequired(true)
     ),
+  new SlashCommandBuilder()
+    .setName("ラッキーカラー一覧")
+    .setDescription("ラッキーカラーをすべて見る"),
+  new SlashCommandBuilder()
+    .setName("ラッキーアイテム一覧")
+    .setDescription("ラッキーアイテムをすべて見る"),
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: "10" }).setToken(BOT_TOKEN);

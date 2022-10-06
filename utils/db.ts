@@ -91,6 +91,16 @@ const addLuckyItem = async (item: string, interaction) => {
   }
 };
 
+const getAllLuckyItems = async () => {
+  const items = await LuckyItem.findAll();
+  return items.map((item) => item.getDataValue("item"));
+};
+
+const getAllLuckyColors = async () => {
+  const colors = await LuckyColor.findAll();
+  return colors.map((color) => color.getDataValue("color"));
+};
+
 export {
   Omikuji,
   LuckyColor,
@@ -99,4 +109,6 @@ export {
   getRandomColor,
   addLuckyColor,
   addLuckyItem,
+  getAllLuckyItems,
+  getAllLuckyColors,
 };
