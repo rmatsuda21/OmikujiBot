@@ -3,6 +3,7 @@ import {
   AttachmentBuilder,
   CacheType,
   ChatInputCommandInteraction,
+  EmbedBuilder,
 } from "discord.js";
 import { createImage } from "./canvas";
 import { Omikuji } from "./db";
@@ -54,11 +55,25 @@ export const drawMikuji = async (
   const attachment = new AttachmentBuilder(await createImage(unsei), {
     name: "profile-image.png",
   });
+  const icon = new AttachmentBuilder("./images/Icon.png");
+  const iconURL = interaction.guild.iconURL();
+
+  console.log(iconURL);
+
+  const embeds = [
+    new EmbedBuilder()
+      .setAuthor({ name: "本音みくじ", iconURL })
+      .setColor("#c92626")
+      .setTitle(`今日の運勢：${unsei}`)
+      .setDescription("今日のあなたの運勢です！")
+      .setThumbnail("attachment://Icon.png")
+      .setImage("attachment://profile-image.png"),
+  ];
 
   await interaction
     .reply({
-      content: `Hi <@${user_id}>`,
-      files: [attachment],
+      embeds,
+      files: [attachment, icon],
     })
     .catch((err) => {
       console.log(err);

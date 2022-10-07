@@ -81,7 +81,9 @@ client.once("ready", async () => {
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  const { commandName, user, member } = interaction;
+  const { commandName, user, member, guild } = interaction;
+
+  console.log(guild.iconURL());
 
   const isAdmin = (member.permissions as Readonly<PermissionsBitField>).has(
     PermissionsBitField.Flags.Administrator
