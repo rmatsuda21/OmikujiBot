@@ -1,11 +1,9 @@
 import { config } from "dotenv";
 import {
-  Attachment,
   AttachmentBuilder,
   Client,
   EmbedBuilder,
   GatewayIntentBits,
-  GuildMemberRoleManager,
   PermissionsBitField,
 } from "discord.js";
 import { join } from "path";
@@ -73,8 +71,6 @@ client.once("ready", async () => {
     await Promise.all([Omikuji.sync(), LuckyColor.sync(), LuckyItem.sync()]);
   }
 
-  console.log(await getAllLuckyItems());
-  console.log(await getAllLuckyColors());
   console.log("Ready!");
 });
 
@@ -83,11 +79,12 @@ client.on("interactionCreate", async (interaction) => {
 
   const { commandName, user, member, guild } = interaction;
 
-  console.log(guild.iconURL());
-
   const isAdmin = (member.permissions as Readonly<PermissionsBitField>).has(
     PermissionsBitField.Flags.Administrator
   );
+
+  const icon = new AttachmentBuilder("./images/Icon.png");
+  let embeds;
 
   switch (commandName) {
     case "おみくじ":
@@ -98,6 +95,7 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.reply("Not sufficient permission!");
         break;
       }
+
       addLuckyColor(interaction.options.getString("カラー名"), interaction);
       break;
     case "ラッキーアイテム追加":
@@ -105,6 +103,7 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.reply("Not sufficient permission!");
         break;
       }
+
       addLuckyItem(interaction.options.getString("アイテム名"), interaction);
       break;
     case "ラッキーカラー一覧":
@@ -112,22 +111,43 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.reply("Not sufficient permission!");
         break;
       }
-      const file = new AttachmentBuilder("./images/Icon.png");
-      const embeds = [
+
+      embeds = [
         new EmbedBuilder()
           .setTitle("ラッキーカラー一覧")
           .setThumbnail("attachment://Icon.png")
           .setColor("#c92626")
           .setDescription((await getAllLuckyColors()).join("\n")),
       ];
-      await interaction.reply({ embeds, files: [file] });
+      await interaction.reply({ embeds, files: [icon] });
       break;
     case "ラッキーアイテム一覧":
       if (!isAdmin) {
         await interaction.reply("Not sufficient permission!");
         break;
       }
-      await interaction.reply((await getAllLuckyItems()).join("\n"));
+
+      const MAX_PAGE_ITEM_COUNT = 25;
+      const items = await getAllLuckyItems();
+      const pageNum = interaction.options.getNumber("ページ数");
+      const maxPageNum = Math.ceil(items.length / MAX_PAGE_ITEM_COUNT);
+
+      const itemList = items
+        .splice((pageNum - 1) * MAX_PAGE_ITEM_COUNT, MAX_PAGE_ITEM_COUNT)
+        .join("\n");
+
+      embeds = [
+        new EmbedBuilder()
+          .setAuthor({
+            name: "📖 ラッキーアイテム一覧",
+            iconURL: interaction.guild.iconURL(),
+          })
+          .setTitle(`ページ：【 ${pageNum} / ${maxPageNum} 】`)
+          .setThumbnail("attachment://Icon.png")
+          .setColor("#c92626")
+          .setDescription("```\n" + itemList + "```"),
+      ];
+      await interaction.reply({ embeds, files: [icon] });
       break;
     default:
       await interaction.reply("Unknown Command!");

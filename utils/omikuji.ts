@@ -58,14 +58,16 @@ export const drawMikuji = async (
   const icon = new AttachmentBuilder("./images/Icon.png");
   const iconURL = interaction.guild.iconURL();
 
-  console.log(iconURL);
-
   const embeds = [
     new EmbedBuilder()
-      .setAuthor({ name: "本音みくじ", iconURL })
+      .setAuthor({
+        name: "本音みくじ",
+        iconURL,
+      })
       .setColor("#c92626")
-      .setTitle(`今日の運勢：${unsei}`)
-      .setDescription("今日のあなたの運勢です！")
+      .setTitle(
+        `> **今日の運勢**\n> :shinto_shrine: **${unsei}** :shinto_shrine:`
+      )
       .setThumbnail("attachment://Icon.png")
       .setImage("attachment://profile-image.png"),
   ];

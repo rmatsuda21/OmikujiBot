@@ -2,6 +2,7 @@ import { createCanvas } from "@napi-rs/canvas";
 import { getRandomColor, getRandomItem } from "./db";
 
 const COLORS = {
+  DARK_WHITE: "#ccbda3",
   WHITE: "#F4EDE1",
   BLACK: "#000",
   RED: "#F71515",
@@ -314,6 +315,13 @@ export const createImage = async (unsei: string) => {
     90,
     "BLACK"
   );
+
+  // Set border
+  ctx.fillStyle = COLORS.RED;
+  ctx.strokeStyle = "#666";
+  ctx.lineWidth = 10;
+  const offset = 5;
+  ctx.strokeRect(offset, offset, width - offset * 2, height - offset * 2);
 
   return canvas.encode("png");
 };

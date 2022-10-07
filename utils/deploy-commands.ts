@@ -1,5 +1,7 @@
-require("dotenv").config();
-const { REST, SlashCommandBuilder, Routes } = require("discord.js");
+import { REST, Routes, SlashCommandBuilder } from "discord.js";
+import { config } from "dotenv";
+
+config();
 const { BOT_TOKEN, GUILD_ID, CLIENT_ID } = process.env;
 
 const commands = [
@@ -29,14 +31,17 @@ const commands = [
     .setDescription("ラッキーカラーをすべて見る"),
   new SlashCommandBuilder()
     .setName("ラッキーアイテム一覧")
-    .setDescription("ラッキーアイテムをすべて見る"),
+    .setDescription("ラッキーアイテムをすべて見る")
+    .addNumberOption((item) =>
+      item.setName("ページ数").setDescription("hi").setRequired(true)
+    ),
 ].map((command) => command.toJSON());
 
 const rest = new REST({ version: "10" }).setToken(BOT_TOKEN);
 
 rest
   .put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), { body: commands })
-  .then((data) =>
+  .then((data: any) =>
     console.log(`Successfully registered ${data.length} application commands.`)
   )
   .catch(console.error);
