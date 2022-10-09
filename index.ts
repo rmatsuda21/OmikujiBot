@@ -9,18 +9,17 @@ import {
 import { join } from "path";
 import { GlobalFonts } from "@napi-rs/canvas";
 
-import {
-  addLuckyColor,
-  addLuckyItem,
-  getAllLuckyColors,
-  getAllLuckyItems,
-  LuckyColor,
-  LuckyItem,
-  Omikuji,
-} from "./utils/db";
 import { drawMikuji } from "./utils/omikuji";
-const { colors }: { colors: string[] } = require("./data/luckyColor.json");
-const { items }: { items: string[] } = require("./data/luckyItem.json");
+import {
+  addColor,
+  addItem,
+  connectToDB,
+  getAllColors,
+  getAllItems,
+  getRandomColor,
+  getRandomItem,
+  seedDB,
+} from "./utils/mongodb";
 
 // Setup
 config();
@@ -50,30 +49,19 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 // When the client is ready, run this code (only once)
 client.once("ready", async () => {
-  if (process.env.DEV === "true") {
-    await Promise.all([
-      Omikuji.sync({ force: true }),
-      LuckyColor.sync({ force: true }),
-      LuckyItem.sync({ force: true }),
-    ]);
+  await connectToDB();
 
-    await LuckyColor.bulkCreate(
-      colors.map((color) => {
-        return { color };
-      })
-    );
-    await LuckyItem.bulkCreate(
-      items.map((item) => {
-        return { item: item };
-      })
-    );
-  } else {
-    await Promise.all([Omikuji.sync(), LuckyColor.sync(), LuckyItem.sync()]);
+  if (process.env.DEV === "true") {
+    await seedDB();
+    console.log(await getRandomColor());
+    console.log(await getRandomItem());
+    console.log(await getAllColors());
   }
 
   console.log("Ready!");
 });
 
+// Wait for interaction
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -95,16 +83,24 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.reply("Not sufficient permission!");
         break;
       }
-
-      addLuckyColor(interaction.options.getString("カラー名"), interaction);
+      try {
+        addColor(interaction.options.getString("カラー名"));
+        interaction.reply("Added color!");
+      } catch (err) {
+        interaction.reply("Error!");
+      }
       break;
     case "ラッキーアイテム追加":
       if (!isAdmin) {
         await interaction.reply("Not sufficient permission!");
         break;
       }
-
-      addLuckyItem(interaction.options.getString("アイテム名"), interaction);
+      try {
+        addItem(interaction.options.getString("アイテム名"));
+        interaction.reply("Added item!");
+      } catch (err) {
+        interaction.reply("Error!");
+      }
       break;
     case "ラッキーカラー一覧":
       if (!isAdmin) {
@@ -117,7 +113,7 @@ client.on("interactionCreate", async (interaction) => {
           .setTitle("ラッキーカラー一覧")
           .setThumbnail("attachment://Icon.png")
           .setColor("#c92626")
-          .setDescription((await getAllLuckyColors()).join("\n")),
+          .setDescription("```\n" + (await getAllColors()).join("\n") + "```"),
       ];
       await interaction.reply({ embeds, files: [icon] });
       break;
@@ -128,7 +124,7 @@ client.on("interactionCreate", async (interaction) => {
       }
 
       const MAX_PAGE_ITEM_COUNT = 25;
-      const items = await getAllLuckyItems();
+      const items = await getAllItems();
       const pageNum = interaction.options.getNumber("ページ数");
       const maxPageNum = Math.ceil(items.length / MAX_PAGE_ITEM_COUNT);
 

@@ -72,6 +72,8 @@ export const drawMikuji = async (
       .setImage("attachment://profile-image.png"),
   ];
 
+  // await
+
   await interaction
     .reply({
       embeds,

@@ -2,7 +2,7 @@ import { REST, Routes, SlashCommandBuilder } from "discord.js";
 import { config } from "dotenv";
 
 config();
-const { BOT_TOKEN, GUILD_ID, CLIENT_ID } = process.env;
+const { BOT_TOKEN = "", GUILD_ID = "", CLIENT_ID = "" } = process.env;
 
 const commands = [
   new SlashCommandBuilder()
