@@ -9,7 +9,9 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
-let colorsCol: Collection<Document>, itemsCol: Collection<Document>;
+let colorsCol: Collection<Document>,
+  itemsCol: Collection<Document>,
+  shobaiCol: Collection<Document>;
 const PAGE_LIMIT = 20;
 
 export const connectToDB = async () => {
@@ -67,9 +69,17 @@ export const getRandomItem = async () => {
   }
 };
 
-export const getAllColors = async (page_num = 1) => {
+export const getAllColors = async () => {
   try {
-    return await await (
+    return (await colorsCol.find().toArray()).map(({ color }) => color);
+  } catch (err) {
+    throw "Error while getting all colors";
+  }
+};
+
+export const getColorPaginated = async (page_num = 1) => {
+  try {
+    return (
       await colorsCol
         .find()
         .skip(page_num > 0 ? PAGE_LIMIT * (page_num - 1) : 0)
@@ -81,10 +91,54 @@ export const getAllColors = async (page_num = 1) => {
   }
 };
 
+export const getColorsCount = async () => {
+  try {
+    return await colorsCol.estimatedDocumentCount();
+  } catch (err) {
+    throw "Error: (getColorsCount)";
+  }
+};
+
+export const getMaxColorsPageNum = async () => {
+  try {
+    return Math.ceil((await colorsCol.estimatedDocumentCount()) / PAGE_LIMIT);
+  } catch (err) {
+    throw "Error: (getMaxColorsPageNum)";
+  }
+};
+
+export const getItemsCount = async () => {
+  try {
+    return await itemsCol.estimatedDocumentCount();
+  } catch (err) {
+    throw "Error: (getItemsCount)";
+  }
+};
+
+export const getMaxItemsPageNum = async () => {
+  try {
+    return Math.ceil((await itemsCol.estimatedDocumentCount()) / PAGE_LIMIT);
+  } catch (err) {
+    throw "Error: (getMaxItemsPageNum)";
+  }
+};
+
 export const getAllItems = async () => {
   try {
-    return await await (
-      await itemsCol.find().toArray()
+    return (await itemsCol.find().toArray()).map(({ item }) => item);
+  } catch (err) {
+    throw "Error while getting all colors";
+  }
+};
+
+export const getItemsPaginated = async (page_num = 1) => {
+  try {
+    return (
+      await itemsCol
+        .find()
+        .skip(page_num > 0 ? PAGE_LIMIT * (page_num - 1) : 0)
+        .limit(PAGE_LIMIT)
+        .toArray()
     ).map(({ item }) => item);
   } catch (err) {
     throw "Error while getting all colors";
@@ -104,5 +158,25 @@ export const addItem = async (item: string) => {
     await itemsCol.insertOne({ item });
   } catch (err) {
     throw "Couldn't insert";
+  }
+};
+
+export const removeItem = async (item: string) => {
+  try {
+    const res = await itemsCol.deleteOne({ item });
+    if (res.deletedCount === 1) return true;
+    return false;
+  } catch (err) {
+    throw "Error: (removeItem)";
+  }
+};
+
+export const removeColor = async (color: string) => {
+  try {
+    const res = await colorsCol.deleteOne({ color });
+    if (res.deletedCount === 1) return true;
+    return false;
+  } catch (err) {
+    throw "Error: (removeColor)";
   }
 };

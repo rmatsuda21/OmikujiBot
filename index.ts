@@ -1,9 +1,12 @@
 import { config } from "dotenv";
 import {
   AttachmentBuilder,
+  CacheType,
+  ChatInputCommandInteraction,
   Client,
   EmbedBuilder,
   GatewayIntentBits,
+  Interaction,
   PermissionsBitField,
 } from "discord.js";
 import { join } from "path";
@@ -16,8 +19,13 @@ import {
   connectToDB,
   getAllColors,
   getAllItems,
+  getColorPaginated,
+  getItemsPaginated,
+  getMaxColorsPageNum,
+  getMaxItemsPageNum,
   getRandomColor,
   getRandomItem,
+  removeItem,
   seedDB,
 } from "./utils/mongodb";
 
@@ -46,6 +54,7 @@ GlobalFonts.registerFromPath(
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const icon = new AttachmentBuilder("./images/Icon.png");
 
 // When the client is ready, run this code (only once)
 client.once("ready", async () => {
@@ -53,14 +62,74 @@ client.once("ready", async () => {
 
   if (process.env.DEV === "true") {
     await seedDB();
-    console.log(await getRandomColor());
-    console.log(await getRandomItem());
-    console.log(await getAllColors());
+    // console.log(await getRandomColor());
+    // console.log(await getRandomItem());
+    // console.log(await getAllColors());
   }
 
   console.log("Ready!");
 });
 
+const getLuckyColors = async (
+  interaction: ChatInputCommandInteraction<CacheType>
+) => {
+  let pageNum = interaction.options.getNumber("ページ数");
+  const maxPageNum = await getMaxColorsPageNum();
+  const items = (await getColorPaginated(pageNum)).join("\n");
+
+  await interaction.reply(
+    await getList(
+      interaction,
+      pageNum,
+      maxPageNum,
+      items,
+      "📖 ラッキーカラー一覧"
+    )
+  );
+};
+
+const getLuckyItems = async (
+  interaction: ChatInputCommandInteraction<CacheType>
+) => {
+  let pageNum = interaction.options.getNumber("ページ数");
+  const maxPageNum = await getMaxItemsPageNum();
+  const items = (await getItemsPaginated(pageNum)).join("\n");
+
+  await interaction.reply(
+    await getList(
+      interaction,
+      pageNum,
+      maxPageNum,
+      items,
+      "📖 ラッキーアイテム一覧"
+    )
+  );
+};
+
+const getList = async (
+  interaction: ChatInputCommandInteraction<CacheType>,
+  pageNum: number,
+  maxPageNum: number,
+  items: string,
+  title: string
+) => {
+  if (pageNum <= 0) pageNum = 1;
+  if (pageNum > maxPageNum) pageNum = maxPageNum;
+
+  const embeds = [
+    new EmbedBuilder()
+      .setAuthor({
+        name: title,
+        iconURL: interaction.guild.iconURL(),
+      })
+      .setTitle(`ページ：【 ${pageNum} / ${maxPageNum} 】`)
+      .setThumbnail("attachment://Icon.png")
+      .setColor("#c92626")
+      .setDescription("```\n" + items + "```"),
+  ];
+
+  return { embeds, files: [icon] };
+};
 // Wait for interaction
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
@@ -70,9 +139,6 @@ client.on("interactionCreate", async (interaction) => {
   const isAdmin = (member.permissions as Readonly<PermissionsBitField>).has(
     PermissionsBitField.Flags.Administrator
   );
-
-  const icon = new AttachmentBuilder("./images/Icon.png");
-  let embeds;
 
   switch (commandName) {
     case "おみくじ":
@@ -108,14 +174,7 @@ client.on("interactionCreate", async (interaction) => {
         break;
       }
 
-      embeds = [
-        new EmbedBuilder()
-          .setTitle("ラッキーカラー一覧")
-          .setThumbnail("attachment://Icon.png")
-          .setColor("#c92626")
-          .setDescription("```\n" + (await getAllColors()).join("\n") + "```"),
-      ];
-      await interaction.reply({ embeds, files: [icon] });
+      await getLuckyColors(interaction);
       break;
     case "ラッキーアイテム一覧":
       if (!isAdmin) {
@@ -123,27 +182,20 @@ client.on("interactionCreate", async (interaction) => {
         break;
       }
 
-      const MAX_PAGE_ITEM_COUNT = 25;
-      const items = await getAllItems();
-      const pageNum = interaction.options.getNumber("ページ数");
-      const maxPageNum = Math.ceil(items.length / MAX_PAGE_ITEM_COUNT);
+      await getLuckyItems(interaction);
+      break;
+    case "ラッキーアイテム消去":
+      if (!isAdmin) {
+        await interaction.reply("Not sufficient permission!");
+        break;
+      }
 
-      const itemList = items
-        .splice((pageNum - 1) * MAX_PAGE_ITEM_COUNT, MAX_PAGE_ITEM_COUNT)
-        .join("\n");
-
-      embeds = [
-        new EmbedBuilder()
-          .setAuthor({
-            name: "📖 ラッキーアイテム一覧",
-            iconURL: interaction.guild.iconURL(),
-          })
-          .setTitle(`ページ：【 ${pageNum} / ${maxPageNum} 】`)
-          .setThumbnail("attachment://Icon.png")
-          .setColor("#c92626")
-          .setDescription("```\n" + itemList + "```"),
-      ];
-      await interaction.reply({ embeds, files: [icon] });
+      const res = await removeItem(interaction.options.getString("アイテム名"));
+      if (res) {
+        await interaction.reply("Removed Item!");
+      } else {
+        await interaction.reply("Could not remove!");
+      }
       break;
     default:
       await interaction.reply("Unknown Command!");

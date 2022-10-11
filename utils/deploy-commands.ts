@@ -28,12 +28,39 @@ const commands = [
     ),
   new SlashCommandBuilder()
     .setName("ラッキーカラー一覧")
-    .setDescription("ラッキーカラーをすべて見る"),
+    .setDescription("ラッキーカラーをすべて見る")
+    .addNumberOption((page) =>
+      page
+        .setName("ページ数")
+        .setDescription("一覧のページ数")
+        .setRequired(true)
+    ),
   new SlashCommandBuilder()
     .setName("ラッキーアイテム一覧")
     .setDescription("ラッキーアイテムをすべて見る")
     .addNumberOption((item) =>
-      item.setName("ページ数").setDescription("hi").setRequired(true)
+      item
+        .setName("ページ数")
+        .setDescription("一覧のページ数")
+        .setRequired(true)
+    ),
+  new SlashCommandBuilder()
+    .setName("ラッキーアイテム消去")
+    .setDescription("指定のラッキーアイテムを消去する")
+    .addStringOption((item) =>
+      item
+        .setName("アイテム名")
+        .setDescription("消去したいアイテムの名前")
+        .setRequired(true)
+    ),
+  new SlashCommandBuilder()
+    .setName("ラッキーカラー消去")
+    .setDescription("指定のラッキーカラーを消去する")
+    .addStringOption((item) =>
+      item
+        .setName("カラー名")
+        .setDescription("消去したいカラーの名前")
+        .setRequired(true)
     ),
 ].map((command) => command.toJSON());
 
