@@ -11,7 +11,9 @@ const client = new MongoClient(uri, {
 
 let colorsCol: Collection<Document>,
   itemsCol: Collection<Document>,
-  shobaiCol: Collection<Document>;
+  shobaiCol: Collection<Document>,
+  rennaiCol: Collection<Document>,
+  gannbouCol: Collection<Document>;
 const PAGE_LIMIT = 20;
 
 export const connectToDB = async () => {
