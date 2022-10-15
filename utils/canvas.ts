@@ -1,11 +1,11 @@
-import { createCanvas } from "@napi-rs/canvas";
+import { loadImage, createCanvas } from "@napi-rs/canvas";
 import { getRandomColor, getRandomItem } from "./db";
 
 const COLORS = {
   DARK_WHITE: "#ccbda3",
   WHITE: "#F4EDE1",
   BLACK: "#000",
-  RED: "#F71515",
+  RED: "#CC443C",
 };
 
 const FONT_REGULAR = (fontSize) => `${fontSize}px ZenMaruRegular`;
@@ -16,8 +16,8 @@ const FONT_CHINESE = (fontSize) => `${fontSize}px HuangYou`;
 
 type FONT_STYLE = "LIGHT" | "REGULAR" | "BOLD" | "BLACK" | "CHINESE";
 
-const CANVAS_WIDTH = 800,
-  CANVAS_HEIGHT = 1800;
+const CANVAS_WIDTH = 162 * 2,
+  CANVAS_HEIGHT = 420 * 2;
 
 const canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
 const ctx = canvas.getContext("2d");
@@ -34,7 +34,7 @@ const drawVerticalText = (
     drawText(
       text.charAt(i),
       x,
-      y + ctx.measureText(text.charAt(i)).width * i,
+      y + ctx.measureText(text.charAt(i)).width * i + 2 * i,
       fontSize,
       fontWidth,
       fillSyle
@@ -112,211 +112,26 @@ const drawLine = (
 export const createImage = async (unsei: string) => {
   const { width, height } = canvas;
 
-  // Set background
-  ctx.fillStyle = COLORS.WHITE;
-  ctx.fillRect(0, 0, width, height);
-
-  // Set layout
-  const HEADER_HEIGHT = 200;
-  const STORY_HEIGHT = HEADER_HEIGHT + 400;
-  const CONTENT_HEIGHT = STORY_HEIGHT + 750;
-  const LUCKY_ITEM_HEIGHT = CONTENT_HEIGHT;
-  const LUCKY_COLOR_HEIGHT = LUCKY_ITEM_HEIGHT + 225;
-
-  const BORDER_WIDTH = 4;
-  const CENTER_TITLE_WIDTH = 200;
-
-  drawLine(0, HEADER_HEIGHT, width, HEADER_HEIGHT, BORDER_WIDTH);
-  drawLine(0, STORY_HEIGHT, width, STORY_HEIGHT, BORDER_WIDTH);
-  drawLine(
-    width / 2 - CENTER_TITLE_WIDTH / 2,
-    STORY_HEIGHT,
-    width / 2 - CENTER_TITLE_WIDTH / 2,
-    CONTENT_HEIGHT,
-    BORDER_WIDTH
-  );
-  drawLine(
-    width / 2 + CENTER_TITLE_WIDTH / 2,
-    STORY_HEIGHT,
-    width / 2 + CENTER_TITLE_WIDTH / 2,
-    CONTENT_HEIGHT,
-    BORDER_WIDTH
-  );
-  drawLine(0, LUCKY_ITEM_HEIGHT, width, LUCKY_ITEM_HEIGHT, BORDER_WIDTH);
-  drawLine(0, LUCKY_COLOR_HEIGHT, width, LUCKY_COLOR_HEIGHT, BORDER_WIDTH);
+  const background = await loadImage("./references/MikujiTemplate.png");
+  ctx.drawImage(background, 0, 0, width, height);
 
   // Header
-  drawVerticalText("運勢", 130, HEADER_HEIGHT / 2 - 30, 60, "REGULAR");
-  drawText(`${unsei}`, width / 2, HEADER_HEIGHT / 2, 130, "BLACK");
+  drawText("不運の", width / 2, 210, 16, "BLACK", COLORS.BLACK);
+  drawText(unsei, width / 2, 245, 45, "BLACK", COLORS.RED);
 
-  // Story
-  drawText(
-    "【小話】",
-    width / 2,
-    (CONTENT_HEIGHT - STORY_HEIGHT) / 2,
-    70,
-    "LIGHT"
-  );
+  // Mid
+  drawText("ラッキーアイテム", width / 2, 300, 13, "BOLD");
+  drawText(await getRandomItem(), width / 2, 335, 25, "BLACK");
+  drawText("ラッキーカラー", width / 2, 370, 13, "BOLD");
+  drawText(await getRandomColor(), width / 2, 400, 25, "BLACK");
 
-  // Title
-  const ICON_RADIUS = CENTER_TITLE_WIDTH / 2 - 30;
-  drawCircle(
-    width / 2,
-    STORY_HEIGHT + ICON_RADIUS + 40,
-    ICON_RADIUS,
-    6,
-    COLORS.WHITE,
-    COLORS.RED
-  );
-  drawText(
-    "神",
-    width / 2,
-    STORY_HEIGHT + ICON_RADIUS + 30,
-    100,
-    "CHINESE",
-    COLORS.WHITE
-  );
-  drawVerticalText(
-    "本音みくじ",
-    width / 2,
-    STORY_HEIGHT + ICON_RADIUS + 210,
-    80,
-    "BOLD"
-  );
-
-  // Left content
-  const sideContentFontSize = 40;
-  drawVerticalText(
-    "商売",
-    width - sideContentFontSize,
-    STORY_HEIGHT + sideContentFontSize,
-    sideContentFontSize,
-    "BOLD"
-  );
-  drawVerticalText(
-    "恋愛",
-    width - sideContentFontSize * 2 - 60,
-    STORY_HEIGHT + sideContentFontSize,
-    sideContentFontSize,
-    "BOLD"
-  );
-  drawVerticalText(
-    "願望",
-    width - sideContentFontSize * 3 - 120,
-    STORY_HEIGHT + sideContentFontSize,
-    sideContentFontSize,
-    "BOLD"
-  );
-
-  drawVerticalText(
-    "おもしろい一文",
-    width - sideContentFontSize,
-    STORY_HEIGHT + sideContentFontSize + sideContentFontSize * 3,
-    sideContentFontSize,
-    "LIGHT"
-  );
-  drawVerticalText(
-    "おもしろい一文",
-    width - sideContentFontSize * 2 - 60,
-    STORY_HEIGHT + sideContentFontSize + sideContentFontSize * 3,
-    sideContentFontSize,
-    "LIGHT"
-  );
-  drawVerticalText(
-    "おもしろい一文",
-    width - sideContentFontSize * 3 - 120,
-    STORY_HEIGHT + sideContentFontSize + sideContentFontSize * 3,
-    sideContentFontSize,
-    "LIGHT"
-  );
-
-  // Right content
-  drawVerticalText(
-    "病気",
-    0 + sideContentFontSize,
-    STORY_HEIGHT + sideContentFontSize,
-    sideContentFontSize,
-    "BOLD"
-  );
-  drawVerticalText(
-    "失物",
-    0 + sideContentFontSize * 2 + 60,
-    STORY_HEIGHT + sideContentFontSize,
-    sideContentFontSize,
-    "BOLD"
-  );
-  drawVerticalText(
-    "争事",
-    0 + sideContentFontSize * 3 + 120,
-    STORY_HEIGHT + sideContentFontSize,
-    sideContentFontSize,
-    "BOLD"
-  );
-
-  drawVerticalText(
-    "おもしろい一文",
-    0 + sideContentFontSize,
-    STORY_HEIGHT + sideContentFontSize + sideContentFontSize * 3,
-    sideContentFontSize,
-    "LIGHT"
-  );
-  drawVerticalText(
-    "おもしろい一文",
-    0 + sideContentFontSize * 2 + 60,
-    STORY_HEIGHT + sideContentFontSize + sideContentFontSize * 3,
-    sideContentFontSize,
-    "LIGHT"
-  );
-  drawVerticalText(
-    "おもしろい一文",
-    0 + sideContentFontSize * 3 + 120,
-    STORY_HEIGHT + sideContentFontSize + sideContentFontSize * 3,
-    sideContentFontSize,
-    "LIGHT"
-  );
-
-  // Lucky Item
-  drawText(
-    "ラッキーアイテム",
-    10,
-    CONTENT_HEIGHT + 30,
-    40,
-    "REGULAR",
-    COLORS.BLACK,
-    true
-  );
-  drawText(
-    await getRandomItem(),
-    width / 2,
-    (LUCKY_COLOR_HEIGHT - CONTENT_HEIGHT) / 2 + CONTENT_HEIGHT,
-    90,
-    "BLACK"
-  );
-
-  // Lucky Color
-  drawText(
-    "ラッキーカレー",
-    10,
-    LUCKY_COLOR_HEIGHT + 30,
-    40,
-    "REGULAR",
-    COLORS.BLACK,
-    true
-  );
-  drawText(
-    await getRandomColor(),
-    width / 2,
-    LUCKY_COLOR_HEIGHT + 120,
-    90,
-    "BLACK"
-  );
-
-  // Set border
-  ctx.fillStyle = COLORS.RED;
-  ctx.strokeStyle = "#666";
-  ctx.lineWidth = 10;
-  const offset = 5;
-  ctx.strokeRect(offset, offset, width - offset * 2, height - offset * 2);
+  // Content
+  const offset = 126 - 92;
+  drawVerticalText("ここに何かを書く", 92, 495, 14, "BLACK");
+  drawVerticalText("ここに何かを書く", 92 + offset, 495, 14, "BLACK");
+  drawVerticalText("ここに何かを書く", 92 + offset * 2, 495, 14, "BLACK");
+  drawVerticalText("ここに何かを書く", 92 + offset * 3, 495, 14, "BLACK");
+  drawVerticalText("ここに何かを書く", 92 + offset * 4, 495, 14, "BLACK");
 
   return canvas.encode("png");
 };

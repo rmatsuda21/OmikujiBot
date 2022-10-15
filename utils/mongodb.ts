@@ -1,5 +1,6 @@
 import { MongoClient, ServerApiVersion, Document, Collection } from "mongodb";
 import { config } from "dotenv";
+import dayjs from "dayjs";
 
 config();
 
@@ -11,6 +12,7 @@ const client = new MongoClient(uri, {
 
 let colorsCol: Collection<Document>,
   itemsCol: Collection<Document>,
+  usersCol: Collection<Document>,
   shobaiCol: Collection<Document>,
   rennaiCol: Collection<Document>,
   gannbouCol: Collection<Document>;
@@ -21,6 +23,7 @@ export const connectToDB = async () => {
     await client.connect();
     colorsCol = client.db("main").collection("colors");
     itemsCol = client.db("main").collection("items");
+    usersCol = client.db("main").collection("user");
     console.log("Successfully connected to MongoDB!");
   } catch (err) {
     console.log(err);
@@ -180,5 +183,17 @@ export const removeColor = async (color: string) => {
     return false;
   } catch (err) {
     throw "Error: (removeColor)";
+  }
+};
+
+export const updateUserDrawDate = async (user_id) => {
+  try {
+    const res = await usersCol.findOneAndUpdate(
+      { userId: user_id },
+      { $set: { last_draw: dayjs().toString() } },
+      { upsert: true }
+    );
+  } catch (err) {
+    throw "Error: (updateUserDrawDate)";
   }
 };

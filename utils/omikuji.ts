@@ -7,8 +7,17 @@ import {
 } from "discord.js";
 import { createImage } from "./canvas";
 import { Omikuji } from "./db";
+import { updateUserDrawDate } from "./mongodb";
 
-const unseiList = ["大吉", "吉", "中吉", "小吉", "末吉", "凶", "大凶"];
+const unseiList = [
+  { unsei: "大吉", coin: 6 },
+  { unsei: "吉", coin: 5 },
+  { unsei: "中吉", coin: 4 },
+  { unsei: "小吉", coin: 3 },
+  { unsei: "末吉", coin: 2 },
+  { unsei: "凶", coin: 1 },
+  { unsei: "大凶", coin: 0 },
+];
 
 // Has the given user already drawn an mikuji today?
 const hasDrawnToday = async (interaction, user_id): Promise<boolean> => {
@@ -20,9 +29,7 @@ const hasDrawnToday = async (interaction, user_id): Promise<boolean> => {
     const previousDate = dayjs(tryFind.getDataValue("last_pick"));
     const currentDate = dayjs();
 
-    const hasDrawnToday =
-      previousDate.month === currentDate.month &&
-      previousDate.date === currentDate.date;
+    const hasDrawnToday = currentDate.isSame(previousDate);
 
     if (hasDrawnToday) {
       await interaction.reply(
@@ -47,7 +54,8 @@ export const drawMikuji = async (
   interaction: ChatInputCommandInteraction<CacheType>,
   user_id: string
 ) => {
-  const unsei = unseiList[Math.floor(Math.random() * unseiList.length)];
+  const { unsei, coin } =
+    unseiList[Math.floor(Math.random() * unseiList.length)];
 
   if (process.env.DEV !== "true" && (await hasDrawnToday(interaction, user_id)))
     return;
@@ -66,13 +74,14 @@ export const drawMikuji = async (
       })
       .setColor("#c92626")
       .setTitle(
-        `> **今日の運勢**\n> :shinto_shrine: **${unsei}** :shinto_shrine:`
+        `> **今日の運勢**\n` + `> :shinto_shrine: **${unsei}** :shinto_shrine:`
       )
+      .setDescription(`**報酬：** +${coin} :coin:`)
       .setThumbnail("attachment://Icon.png")
       .setImage("attachment://profile-image.png"),
   ];
 
-  // await
+  await updateUserDrawDate(user_id);
 
   await interaction
     .reply({
