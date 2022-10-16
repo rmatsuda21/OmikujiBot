@@ -26,6 +26,7 @@ import {
   getMaxItemsPageNum,
   getRandomColor,
   getRandomItem,
+  getRandomPositiveTexts,
   removeItem,
   seedDB,
 } from "./utils/mongodb";
@@ -64,9 +65,6 @@ client.once("ready", async () => {
 
   if (process.env.DEV === "true") {
     await seedDB();
-    // console.log(await getRandomColor());
-    // console.log(await getRandomItem());
-    // console.log(await getAllColors());
   }
 
   console.log("Ready!");
@@ -137,7 +135,9 @@ client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   const { commandName, user, member, guild } = interaction;
-  const { id, avatarURL, username } = user;
+  const { id, username } = user;
+
+  const avatarURL = user.avatarURL();
 
   const isAdmin = (member.permissions as Readonly<PermissionsBitField>).has(
     PermissionsBitField.Flags.Administrator
@@ -145,7 +145,7 @@ client.on("interactionCreate", async (interaction) => {
 
   switch (commandName) {
     case "おみくじ":
-      drawMikuji(interaction, id, avatarURL().toString(), username);
+      drawMikuji(interaction, id, avatarURL, username);
       break;
     case "ラッキーカラー追加":
       if (!isAdmin) {

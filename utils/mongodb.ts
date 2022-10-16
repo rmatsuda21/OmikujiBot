@@ -1,6 +1,14 @@
-import { MongoClient, ServerApiVersion, Document, Collection } from "mongodb";
+import {
+  MongoClient,
+  ServerApiVersion,
+  Document,
+  Collection,
+  Db,
+  WithId,
+} from "mongodb";
 import { config } from "dotenv";
 import dayjs from "dayjs";
+import { getRandomElementFromArray } from "./getRandomElementFromArray";
 
 config();
 
@@ -10,27 +18,26 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
-let colorsCol: Collection<Document>,
+let mainDb: Db,
+  colorsCol: Collection<Document>,
   itemsCol: Collection<Document>,
   usersCol: Collection<Document>,
-  gannbouCol: Collection<Document>,
-  shobaiCol: Collection<Document>,
-  rennaiCol: Collection<Document>,
-  gakumonCol: Collection<Document>,
-  byokiCol: Collection<Document>;
+  positiveTextCol: Collection<Document>,
+  negativeTextCol: Collection<Document>,
+  headerSubtextsCol: Collection<Document>;
+
 const PAGE_LIMIT = 20;
 
 export const connectToDB = async () => {
   try {
     await client.connect();
-    colorsCol = client.db("main").collection("colors");
-    itemsCol = client.db("main").collection("items");
-    usersCol = client.db("main").collection("user");
-    gannbouCol = client.db("main").collection("gannbou");
-    shobaiCol = client.db("main").collection("shobai");
-    rennaiCol = client.db("main").collection("rennai");
-    gakumonCol = client.db("main").collection("gakumon");
-    byokiCol = client.db("main").collection("byoki");
+    mainDb = client.db("main");
+    colorsCol = mainDb.collection("colors");
+    itemsCol = mainDb.collection("items");
+    usersCol = mainDb.collection("user");
+    positiveTextCol = mainDb.collection("positiveText");
+    negativeTextCol = mainDb.collection("negativeText");
+    headerSubtextsCol = mainDb.collection("headerSubtexts");
     console.log("Successfully connected to MongoDB!");
   } catch (err) {
     console.log(err);
@@ -43,14 +50,6 @@ export const cleanupDB = async () => {
   console.log("Closed client");
 };
 
-interface IOmikujiText {
-  ganbou: string[];
-  rennai: string[];
-  gakumon: string[];
-  shobai: string[];
-  byoki: string[];
-}
-
 export const seedDB = async () => {
   const { colors }: { colors: string[] } = require("../data/luckyColor.json");
   const { items }: { items: string[] } = require("../data/luckyItem.json");
@@ -58,34 +57,58 @@ export const seedDB = async () => {
     positive,
     negative,
   }: {
-    positive: IOmikujiText;
-    negative: IOmikujiText;
+    positive: Object[];
+    negative: Object[];
   } = require("../data/unseiText.json");
-
-  console.log(positive, negative);
+  const {
+    subtexts,
+  }: { subtexts: string[] } = require("../data/headerSubtext.json");
 
   console.log("Starting Seeding...");
 
-  const collectionName = (
-    await client.db("main").listCollections().toArray()
-  ).map(({ name }) => name);
+  const collectionName = (await mainDb.listCollections().toArray()).map(
+    ({ name }) => name
+  );
 
   const colorsExists = collectionName.indexOf("colors") !== -1;
   const itemsExists = collectionName.indexOf("items") !== -1;
+  const negativeTextExists = collectionName.indexOf("negativeText") !== -1;
+  const positiveTextExists = collectionName.indexOf("positiveText") !== -1;
+  const headerSubtextsExists = collectionName.indexOf("headerSubtexts") !== -1;
+
   await Promise.all([
     colorsExists && colorsCol.drop(),
     itemsExists && itemsCol.drop(),
+    negativeTextExists && negativeTextCol.drop(),
+    positiveTextExists && positiveTextCol.drop(),
+    headerSubtextsExists && headerSubtextsCol.drop(),
   ]);
 
-  const colorsDoc = colors.map((color) => ({ color }));
-  const itemsDoc = items.map((item) => ({ item }));
+  const colorsDocs = colors.map((color) => ({ color }));
+  const itemsDocs = items.map((item) => ({ item }));
+  const negativeTextDocs = [],
+    positiveTextDocs = [];
+  const subtextDocs = subtexts.map((subtext) => ({ subtext }));
 
   await Promise.all([
-    colorsCol.insertMany(colorsDoc),
-    itemsCol.insertMany(itemsDoc),
+    colorsCol.insertMany(colorsDocs),
+    itemsCol.insertMany(itemsDocs),
+    negativeTextCol.insertMany(negative),
+    positiveTextCol.insertMany(positive),
+    headerSubtextsCol.insertMany(subtextDocs),
   ]);
 
   console.log("Finished Seeding!");
+};
+
+export const getRandomSubtext = async () => {
+  try {
+    return (
+      await headerSubtextsCol.aggregate([{ $sample: { size: 1 } }]).next()
+    ).subtext;
+  } catch (err) {
+    throw "Couldn't get subtext!";
+  }
 };
 
 export const getRandomColor = async () => {
@@ -257,5 +280,49 @@ export const updateUserCoins = async (user_id: string, coins: number) => {
   } catch (err) {
     console.log(err);
     throw "Error: (updateUserCoins)";
+  }
+};
+
+interface IMikujiTexts {
+  ganbou: string;
+  gakumon: string;
+  shobai: string;
+  byoki: string;
+  rennai: string;
+}
+
+interface IMikujiText extends WithId<Document> {
+  name: string;
+  texts: string[];
+}
+
+export const getRandomPositiveTexts = async (): Promise<IMikujiTexts> => {
+  try {
+    const { texts: rennaiTexts } = (await positiveTextCol.findOne({
+      name: "rennai",
+    })) as IMikujiText;
+    const { texts: ganbouTexts } = (await positiveTextCol.findOne({
+      name: "ganbou",
+    })) as IMikujiText;
+    const { texts: gakumonTexts } = (await positiveTextCol.findOne({
+      name: "gakumon",
+    })) as IMikujiText;
+    const { texts: shobaiTexts } = (await positiveTextCol.findOne({
+      name: "shobai",
+    })) as IMikujiText;
+    const { texts: byokiTexts } = (await positiveTextCol.findOne({
+      name: "byoki",
+    })) as IMikujiText;
+
+    return {
+      ganbou: getRandomElementFromArray(ganbouTexts),
+      rennai: getRandomElementFromArray(rennaiTexts),
+      gakumon: getRandomElementFromArray(gakumonTexts),
+      shobai: getRandomElementFromArray(shobaiTexts),
+      byoki: getRandomElementFromArray(byokiTexts),
+    };
+  } catch (err) {
+    console.log(err);
+    throw "Error: (getRandomPositiveTexts)";
   }
 };

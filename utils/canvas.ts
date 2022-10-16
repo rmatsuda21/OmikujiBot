@@ -1,5 +1,6 @@
 import { loadImage, createCanvas } from "@napi-rs/canvas";
 import { getRandomColor, getRandomItem } from "./db";
+import { getRandomPositiveTexts, getRandomSubtext } from "./mongodb";
 
 const COLORS = {
   DARK_WHITE: "#ccbda3",
@@ -116,7 +117,8 @@ export const createImage = async (unsei: string) => {
   ctx.drawImage(background, 0, 0, width, height);
 
   // Header
-  drawText("不運の", width / 2, 210, 16, "BLACK", COLORS.BLACK);
+  const subtext = await getRandomSubtext();
+  drawText(subtext, width / 2, 210, 16, "BLACK", COLORS.BLACK);
   drawText(unsei, width / 2, 245, 45, "BLACK", COLORS.RED);
 
   // Mid
@@ -126,12 +128,14 @@ export const createImage = async (unsei: string) => {
   drawText(await getRandomColor(), width / 2, 400, 25, "BLACK");
 
   // Content
+  const { ganbou, gakumon, rennai, shobai, byoki } =
+    await getRandomPositiveTexts();
   const offset = 126 - 92;
-  drawVerticalText("ここに何かを書く", 92, 495, 14, "BLACK");
-  drawVerticalText("ここに何かを書く", 92 + offset, 495, 14, "BLACK");
-  drawVerticalText("ここに何かを書く", 92 + offset * 2, 495, 14, "BLACK");
-  drawVerticalText("ここに何かを書く", 92 + offset * 3, 495, 14, "BLACK");
-  drawVerticalText("ここに何かを書く", 92 + offset * 4, 495, 14, "BLACK");
+  drawVerticalText(byoki, 92, 495, 14, "BLACK");
+  drawVerticalText(shobai, 92 + offset, 495, 14, "BLACK");
+  drawVerticalText(gakumon, 92 + offset * 2, 495, 14, "BLACK");
+  drawVerticalText(rennai, 92 + offset * 3, 495, 14, "BLACK");
+  drawVerticalText(ganbou, 92 + offset * 4, 495, 14, "BLACK");
 
   return canvas.encode("png");
 };
