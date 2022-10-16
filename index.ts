@@ -16,6 +16,7 @@ import { drawMikuji } from "./utils/omikuji";
 import {
   addColor,
   addItem,
+  cleanupDB,
   connectToDB,
   getAllColors,
   getAllItems,
@@ -28,6 +29,7 @@ import {
   removeItem,
   seedDB,
 } from "./utils/mongodb";
+var nodeCleanup = require("node-cleanup");
 
 // Setup
 config();
@@ -135,6 +137,7 @@ client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   const { commandName, user, member, guild } = interaction;
+  const { id, avatarURL, username } = user;
 
   const isAdmin = (member.permissions as Readonly<PermissionsBitField>).has(
     PermissionsBitField.Flags.Administrator
@@ -142,7 +145,7 @@ client.on("interactionCreate", async (interaction) => {
 
   switch (commandName) {
     case "おみくじ":
-      drawMikuji(interaction, user.id);
+      drawMikuji(interaction, id, avatarURL().toString(), username);
       break;
     case "ラッキーカラー追加":
       if (!isAdmin) {
@@ -205,3 +208,14 @@ client.on("interactionCreate", async (interaction) => {
 
 // Login to Discord with your client's token
 client.login(process.env.BOT_TOKEN);
+
+// Clean up
+const exitHandler = (exitCode, signal) => {
+  if (signal) {
+    cleanupDB().then(() => process.kill(process.pid, signal));
+    nodeCleanup.uninstall();
+    return false;
+  }
+};
+
+nodeCleanup(exitHandler);

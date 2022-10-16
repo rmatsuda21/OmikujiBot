@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 import { createImage } from "./canvas";
 import { Omikuji } from "./db";
-import { updateUserDrawDate } from "./mongodb";
+import { updateUserDrawDate, updateUserDrawDateAndCoins } from "./mongodb";
 
 const unseiList = [
   { unsei: "大吉", coin: 6 },
@@ -52,7 +52,9 @@ const hasDrawnToday = async (interaction, user_id): Promise<boolean> => {
 
 export const drawMikuji = async (
   interaction: ChatInputCommandInteraction<CacheType>,
-  user_id: string
+  user_id: string,
+  user_icon?: string,
+  user_name?: string
 ) => {
   const { unsei, coin } =
     unseiList[Math.floor(Math.random() * unseiList.length)];
@@ -76,12 +78,21 @@ export const drawMikuji = async (
       .setTitle(
         `> **今日の運勢**\n` + `> :shinto_shrine: **${unsei}** :shinto_shrine:`
       )
-      .setDescription(`**報酬：** +${coin} :coin:`)
+      .setDescription(`**大人のコイン：** +${coin} :coin:`)
       .setThumbnail("attachment://Icon.png")
-      .setImage("attachment://profile-image.png"),
+      .setImage("attachment://profile-image.png")
+      .setTimestamp()
+      .setFooter({
+        text: user_name,
+        iconURL: user_icon,
+      }),
   ];
 
-  await updateUserDrawDate(user_id);
+  try {
+    await updateUserDrawDateAndCoins(user_id, coin);
+  } catch (err) {
+    console.log(err);
+  }
 
   await interaction
     .reply({

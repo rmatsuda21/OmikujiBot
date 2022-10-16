@@ -13,9 +13,11 @@ const client = new MongoClient(uri, {
 let colorsCol: Collection<Document>,
   itemsCol: Collection<Document>,
   usersCol: Collection<Document>,
+  gannbouCol: Collection<Document>,
   shobaiCol: Collection<Document>,
   rennaiCol: Collection<Document>,
-  gannbouCol: Collection<Document>;
+  gakumonCol: Collection<Document>,
+  byokiCol: Collection<Document>;
 const PAGE_LIMIT = 20;
 
 export const connectToDB = async () => {
@@ -24,15 +26,43 @@ export const connectToDB = async () => {
     colorsCol = client.db("main").collection("colors");
     itemsCol = client.db("main").collection("items");
     usersCol = client.db("main").collection("user");
+    gannbouCol = client.db("main").collection("gannbou");
+    shobaiCol = client.db("main").collection("shobai");
+    rennaiCol = client.db("main").collection("rennai");
+    gakumonCol = client.db("main").collection("gakumon");
+    byokiCol = client.db("main").collection("byoki");
     console.log("Successfully connected to MongoDB!");
   } catch (err) {
     console.log(err);
   }
 };
 
+export const cleanupDB = async () => {
+  console.log("Closing client");
+  await client.close();
+  console.log("Closed client");
+};
+
+interface IOmikujiText {
+  ganbou: string[];
+  rennai: string[];
+  gakumon: string[];
+  shobai: string[];
+  byoki: string[];
+}
+
 export const seedDB = async () => {
   const { colors }: { colors: string[] } = require("../data/luckyColor.json");
   const { items }: { items: string[] } = require("../data/luckyItem.json");
+  const {
+    positive,
+    negative,
+  }: {
+    positive: IOmikujiText;
+    negative: IOmikujiText;
+  } = require("../data/unseiText.json");
+
+  console.log(positive, negative);
 
   console.log("Starting Seeding...");
 
@@ -186,14 +216,46 @@ export const removeColor = async (color: string) => {
   }
 };
 
-export const updateUserDrawDate = async (user_id) => {
+export const updateUserDrawDateAndCoins = async (
+  user_id: string,
+  coins: number
+) => {
   try {
     const res = await usersCol.findOneAndUpdate(
       { userId: user_id },
-      { $set: { last_draw: dayjs().toString() } },
+      {
+        $inc: { coins },
+        $set: { last_draw: dayjs().toString() },
+      },
+      { upsert: true }
+    );
+  } catch (err) {
+    console.log(err);
+    throw "Error: (updateUserDrawDate)";
+  }
+};
+
+export const updateUserDrawDate = async (user_id: string) => {
+  try {
+    const res = await usersCol.findOneAndUpdate(
+      { userId: user_id },
+      { $set: { last_draw: dayjs().toString() }, $setOnInsert: { coins: 0 } },
       { upsert: true }
     );
   } catch (err) {
     throw "Error: (updateUserDrawDate)";
+  }
+};
+
+export const updateUserCoins = async (user_id: string, coins: number) => {
+  try {
+    const res = await usersCol.findOneAndUpdate(
+      { userId: user_id },
+      { $inc: { coins } },
+      { upsert: true }
+    );
+  } catch (err) {
+    console.log(err);
+    throw "Error: (updateUserCoins)";
   }
 };
