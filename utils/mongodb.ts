@@ -22,8 +22,7 @@ let mainDb: Db,
   colorsCol: Collection<Document>,
   itemsCol: Collection<Document>,
   usersCol: Collection<Document>,
-  positiveTextCol: Collection<Document>,
-  negativeTextCol: Collection<Document>,
+  textsCol: Collection<Document>,
   headerSubtextsCol: Collection<Document>;
 
 const PAGE_LIMIT = 20;
@@ -35,8 +34,7 @@ export const connectToDB = async () => {
     colorsCol = mainDb.collection("colors");
     itemsCol = mainDb.collection("items");
     usersCol = mainDb.collection("user");
-    positiveTextCol = mainDb.collection("positiveText");
-    negativeTextCol = mainDb.collection("negativeText");
+    textsCol = mainDb.collection("texts");
     headerSubtextsCol = mainDb.collection("headerSubtexts");
     console.log("Successfully connected to MongoDB!");
   } catch (err) {
@@ -54,11 +52,12 @@ export const seedDB = async () => {
   const { colors }: { colors: string[] } = require("../data/luckyColor.json");
   const { items }: { items: string[] } = require("../data/luckyItem.json");
   const {
-    positive,
-    negative,
+    texts,
   }: {
-    positive: Object[];
-    negative: Object[];
+    texts: Array<{
+      name: string;
+      texts: string[];
+    }>;
   } = require("../data/unseiText.json");
   const {
     subtexts,
@@ -72,29 +71,24 @@ export const seedDB = async () => {
 
   const colorsExists = collectionName.indexOf("colors") !== -1;
   const itemsExists = collectionName.indexOf("items") !== -1;
-  const negativeTextExists = collectionName.indexOf("negativeText") !== -1;
-  const positiveTextExists = collectionName.indexOf("positiveText") !== -1;
+  const textsExists = collectionName.indexOf("texts") !== -1;
   const headerSubtextsExists = collectionName.indexOf("headerSubtexts") !== -1;
 
   await Promise.all([
     colorsExists && colorsCol.drop(),
     itemsExists && itemsCol.drop(),
-    negativeTextExists && negativeTextCol.drop(),
-    positiveTextExists && positiveTextCol.drop(),
+    textsExists && textsCol.drop(),
     headerSubtextsExists && headerSubtextsCol.drop(),
   ]);
 
   const colorsDocs = colors.map((color) => ({ color }));
   const itemsDocs = items.map((item) => ({ item }));
-  const negativeTextDocs = [],
-    positiveTextDocs = [];
   const subtextDocs = subtexts.map((subtext) => ({ subtext }));
 
   await Promise.all([
     colorsCol.insertMany(colorsDocs),
     itemsCol.insertMany(itemsDocs),
-    negativeTextCol.insertMany(negative),
-    positiveTextCol.insertMany(positive),
+    textsCol.insertMany(texts),
     headerSubtextsCol.insertMany(subtextDocs),
   ]);
 
@@ -285,34 +279,29 @@ export const updateUserCoins = async (user_id: string, coins: number) => {
 
 interface IMikujiTexts {
   ganbou: string;
+  rennai: string;
   gakumon: string;
   shobai: string;
   byoki: string;
-  rennai: string;
 }
 
-interface IMikujiText extends WithId<Document> {
-  name: string;
-  texts: string[];
-}
-
-export const getRandomPositiveTexts = async (): Promise<IMikujiTexts> => {
+export const getRandomTexts = async (): Promise<IMikujiTexts> => {
   try {
-    const { texts: rennaiTexts } = (await positiveTextCol.findOne({
+    const { texts: rennaiTexts } = await textsCol.findOne({
       name: "rennai",
-    })) as IMikujiText;
-    const { texts: ganbouTexts } = (await positiveTextCol.findOne({
+    });
+    const { texts: ganbouTexts } = await textsCol.findOne({
       name: "ganbou",
-    })) as IMikujiText;
-    const { texts: gakumonTexts } = (await positiveTextCol.findOne({
+    });
+    const { texts: gakumonTexts } = await textsCol.findOne({
       name: "gakumon",
-    })) as IMikujiText;
-    const { texts: shobaiTexts } = (await positiveTextCol.findOne({
+    });
+    const { texts: shobaiTexts } = await textsCol.findOne({
       name: "shobai",
-    })) as IMikujiText;
-    const { texts: byokiTexts } = (await positiveTextCol.findOne({
+    });
+    const { texts: byokiTexts } = await textsCol.findOne({
       name: "byoki",
-    })) as IMikujiText;
+    });
 
     return {
       ganbou: getRandomElementFromArray(ganbouTexts),
@@ -323,6 +312,6 @@ export const getRandomPositiveTexts = async (): Promise<IMikujiTexts> => {
     };
   } catch (err) {
     console.log(err);
-    throw "Error: (getRandomPositiveTexts)";
+    throw "Error: (getRandomTexts)";
   }
 };

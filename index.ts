@@ -26,7 +26,7 @@ import {
   getMaxItemsPageNum,
   getRandomColor,
   getRandomItem,
-  getRandomPositiveTexts,
+  getRandomTexts,
   removeItem,
   seedDB,
 } from "./utils/mongodb";

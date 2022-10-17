@@ -1,6 +1,6 @@
 import { loadImage, createCanvas } from "@napi-rs/canvas";
 import { getRandomColor, getRandomItem } from "./db";
-import { getRandomPositiveTexts, getRandomSubtext } from "./mongodb";
+import { getRandomTexts, getRandomSubtext } from "./mongodb";
 
 const COLORS = {
   DARK_WHITE: "#ccbda3",
@@ -128,8 +128,7 @@ export const createImage = async (unsei: string) => {
   drawText(await getRandomColor(), width / 2, 400, 25, "BLACK");
 
   // Content
-  const { ganbou, gakumon, rennai, shobai, byoki } =
-    await getRandomPositiveTexts();
+  const { ganbou, gakumon, rennai, shobai, byoki } = await getRandomTexts();
   const offset = 126 - 92;
   drawVerticalText(byoki, 92, 495, 14, "BLACK");
   drawVerticalText(shobai, 92 + offset, 495, 14, "BLACK");
