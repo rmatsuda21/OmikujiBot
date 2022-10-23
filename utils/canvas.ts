@@ -1,6 +1,10 @@
 import { loadImage, createCanvas } from "@napi-rs/canvas";
-import { getRandomColor, getRandomItem } from "./db";
-import { getRandomTexts, getRandomSubtext } from "./mongodb";
+import {
+  getRandomTexts,
+  getRandomSubtext,
+  getRandomColor,
+  getRandomItem,
+} from "./mongodb";
 
 const COLORS = {
   DARK_WHITE: "#ccbda3",
@@ -31,15 +35,57 @@ const drawVerticalText = (
   fontWidth: FONT_STYLE = "REGULAR",
   fillSyle: string = COLORS.BLACK
 ) => {
+  let newX = x;
+  let offset = 0;
+  let charCount = 0;
   for (let i = 0; i < text.length; ++i) {
+    charCount += 1;
+    const currChar = text.charAt(i);
+    if (currChar === "\n" || charCount > 16) {
+      charCount = 0;
+      newX -= fontSize + 5;
+      offset = 0;
+      continue;
+    }
+
+    if (currChar === "「") {
+      drawText(
+        currChar,
+        newX - fontSize / 1.2,
+        y + ctx.measureText(currChar).width * offset + 2 * offset,
+        fontSize,
+        "BLACK",
+        fillSyle
+      );
+      offset += 0.4;
+      continue;
+    }
+
+    if (currChar === "」") {
+      drawText(
+        currChar,
+        newX + fontSize / 1.2,
+        y +
+          ctx.measureText(currChar).width * offset +
+          2 * offset -
+          fontSize * 0.6,
+        fontSize,
+        "BLACK",
+        fillSyle
+      );
+      offset += 0.4;
+      continue;
+    }
+
     drawText(
-      text.charAt(i),
-      x,
-      y + ctx.measureText(text.charAt(i)).width * i + 2 * i,
+      currChar,
+      newX,
+      y + ctx.measureText(currChar).width * offset + 2 * offset,
       fontSize,
       fontWidth,
       fillSyle
     );
+    offset += 1;
   }
 };
 
@@ -129,12 +175,13 @@ export const createImage = async (unsei: string) => {
 
   // Content
   const { ganbou, gakumon, rennai, shobai, byoki } = await getRandomTexts();
-  const offset = 126 - 92;
-  drawVerticalText(byoki, 92, 495, 14, "BLACK");
-  drawVerticalText(shobai, 92 + offset, 495, 14, "BLACK");
-  drawVerticalText(gakumon, 92 + offset * 2, 495, 14, "BLACK");
-  drawVerticalText(rennai, 92 + offset * 3, 495, 14, "BLACK");
-  drawVerticalText(ganbou, 92 + offset * 4, 495, 14, "BLACK");
+  const offset = 44,
+    initX = 72;
+  drawVerticalText(byoki, initX, 495, 14, "BOLD");
+  drawVerticalText(shobai, initX + offset, 495, 14, "BOLD");
+  drawVerticalText(gakumon, initX + offset * 2, 495, 14, "BOLD");
+  drawVerticalText(rennai, initX + offset * 3, 495, 14, "BOLD");
+  drawVerticalText(ganbou, initX + offset * 4, 495, 14, "BOLD");
 
   return canvas.encode("png");
 };
