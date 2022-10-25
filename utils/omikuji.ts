@@ -6,8 +6,11 @@ import {
   EmbedBuilder,
 } from "discord.js";
 import { createImage } from "./canvas";
-import { Omikuji } from "./db";
-import { updateUserDrawDate, updateUserDrawDateAndCoins } from "./mongodb";
+import {
+  getUser,
+  updateUserDrawDate,
+  updateUserDrawDateAndCoins,
+} from "./mongodb";
 
 const unseiList = [
   { unsei: "大吉", coin: 6 },
@@ -21,15 +24,13 @@ const unseiList = [
 
 // Has the given user already drawn an mikuji today?
 const hasDrawnToday = async (interaction, user_id): Promise<boolean> => {
-  const tryFind = await Omikuji.findOne({
-    where: { user_id: user_id },
-  });
+  const user = await getUser(user_id);
 
-  if (tryFind) {
-    const previousDate = dayjs(tryFind.getDataValue("last_pick"));
+  if (user) {
+    const previousDate = dayjs(user.last_draw);
     const currentDate = dayjs();
 
-    const hasDrawnToday = currentDate.isSame(previousDate);
+    const hasDrawnToday = currentDate.isSame(previousDate, "day");
 
     if (hasDrawnToday) {
       await interaction.reply(
@@ -39,12 +40,7 @@ const hasDrawnToday = async (interaction, user_id): Promise<boolean> => {
       return true;
     }
 
-    tryFind.setAttributes("last_pick", currentDate.toString());
-  } else {
-    await Omikuji.create({
-      user_id: user_id,
-      last_pick: dayjs().toString(),
-    });
+    await updateUserDrawDate(user_id);
   }
 
   return false;

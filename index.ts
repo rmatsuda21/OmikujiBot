@@ -6,7 +6,6 @@ import {
   Client,
   EmbedBuilder,
   GatewayIntentBits,
-  Interaction,
   PermissionsBitField,
 } from "discord.js";
 import { join } from "path";
@@ -18,15 +17,10 @@ import {
   addItem,
   cleanupDB,
   connectToDB,
-  getAllColors,
-  getAllItems,
   getColorPaginated,
   getItemsPaginated,
   getMaxColorsPageNum,
   getMaxItemsPageNum,
-  getRandomColor,
-  getRandomItem,
-  getRandomTexts,
   removeItem,
   seedDB,
 } from "./utils/mongodb";

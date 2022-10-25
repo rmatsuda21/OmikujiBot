@@ -277,6 +277,15 @@ export const updateUserCoins = async (user_id: string, coins: number) => {
   }
 };
 
+export const getUser = async (user_id: string) => {
+  try {
+    return await usersCol.findOne({ userId: user_id });
+  } catch (err) {
+    console.log(err);
+    throw "Error: (updateUserCoins)";
+  }
+};
+
 interface IMikujiTexts {
   ganbou: string;
   rennai: string;
