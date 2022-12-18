@@ -157,31 +157,35 @@ const drawLine = (
 };
 
 export const createImage = async (unsei: string) => {
-  const { width, height } = canvas;
+  try {
+    const { width, height } = canvas;
 
-  const background = await loadImage("./references/MikujiTemplate.png");
-  ctx.drawImage(background, 0, 0, width, height);
+    const background = await loadImage("./references/MikujiTemplate.png");
+    ctx.drawImage(background, 0, 0, width, height);
 
-  // Header
-  const subtext = await getRandomSubtext();
-  drawText(subtext, width / 2, 210, 16, "BLACK", COLORS.BLACK);
-  drawText(unsei, width / 2, 245, 45, "BLACK", COLORS.RED);
+    // Header
+    const subtext = await getRandomSubtext();
+    drawText(subtext, width / 2, 210, 16, "BLACK", COLORS.BLACK);
+    drawText(unsei, width / 2, 245, 45, "BLACK", COLORS.RED);
 
-  // Mid
-  drawText("ラッキーアイテム", width / 2, 300, 13, "BOLD");
-  drawText(await getRandomItem(), width / 2, 335, 25, "BLACK");
-  drawText("ラッキーカラー", width / 2, 370, 13, "BOLD");
-  drawText(await getRandomColor(), width / 2, 400, 25, "BLACK");
+    // Mid
+    drawText("ラッキーアイテム", width / 2, 300, 13, "BOLD");
+    drawText(await getRandomItem(), width / 2, 335, 25, "BLACK");
+    drawText("ラッキーカラー", width / 2, 370, 13, "BOLD");
+    drawText(await getRandomColor(), width / 2, 400, 25, "BLACK");
 
-  // Content
-  const { ganbou, gakumon, rennai, shobai, byoki } = await getRandomTexts();
-  const offset = 44,
-    initX = 72;
-  drawVerticalText(byoki, initX, 495, 14, "BOLD");
-  drawVerticalText(shobai, initX + offset, 495, 14, "BOLD");
-  drawVerticalText(gakumon, initX + offset * 2, 495, 14, "BOLD");
-  drawVerticalText(rennai, initX + offset * 3, 495, 14, "BOLD");
-  drawVerticalText(ganbou, initX + offset * 4, 495, 14, "BOLD");
+    // Content
+    const { ganbou, gakumon, rennai, shobai, byoki } = await getRandomTexts();
+    const offset = 44,
+      initX = 72;
+    drawVerticalText(byoki, initX, 495, 14, "BOLD");
+    drawVerticalText(shobai, initX + offset, 495, 14, "BOLD");
+    drawVerticalText(gakumon, initX + offset * 2, 495, 14, "BOLD");
+    drawVerticalText(rennai, initX + offset * 3, 495, 14, "BOLD");
+    drawVerticalText(ganbou, initX + offset * 4, 495, 14, "BOLD");
 
-  return canvas.encode("png");
+    return canvas.encode("png");
+  } catch (e) {
+    return canvas.encode("png");
+  }
 };
