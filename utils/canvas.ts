@@ -175,12 +175,12 @@ export const createImage = async (unsei: string) => {
     drawText(await getRandomColor(), width / 2, 400, 25, "BLACK");
 
     // Content
-    const { ganbou, gakumon, rennai, shobai, byoki } = await getRandomTexts();
+    const { ganbou, kinun, rennai, shobai, byoki } = await getRandomTexts();
     const offset = 44,
       initX = 72;
     drawVerticalText(byoki, initX, 495, 14, "BOLD");
     drawVerticalText(shobai, initX + offset, 495, 14, "BOLD");
-    drawVerticalText(gakumon, initX + offset * 2, 495, 14, "BOLD");
+    drawVerticalText(kinun, initX + offset * 2, 495, 14, "BOLD");
     drawVerticalText(rennai, initX + offset * 3, 495, 14, "BOLD");
     drawVerticalText(ganbou, initX + offset * 4, 495, 14, "BOLD");
 

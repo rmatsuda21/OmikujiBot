@@ -289,7 +289,7 @@ export const getUser = async (user_id: string) => {
 interface IMikujiTexts {
   ganbou: string;
   rennai: string;
-  gakumon: string;
+  kinun: string;
   shobai: string;
   byoki: string;
 }
@@ -302,8 +302,8 @@ export const getRandomTexts = async (): Promise<IMikujiTexts> => {
     const { texts: ganbouTexts } = await textsCol.findOne({
       name: "ganbou",
     });
-    const { texts: gakumonTexts } = await textsCol.findOne({
-      name: "gakumon",
+    const { texts: kinunTexts } = await textsCol.findOne({
+      name: "kinun",
     });
     const { texts: shobaiTexts } = await textsCol.findOne({
       name: "shobai",
@@ -315,7 +315,7 @@ export const getRandomTexts = async (): Promise<IMikujiTexts> => {
     return {
       ganbou: getRandomElementFromArray(ganbouTexts),
       rennai: getRandomElementFromArray(rennaiTexts),
-      gakumon: getRandomElementFromArray(gakumonTexts),
+      kinun: getRandomElementFromArray(kinunTexts),
       shobai: getRandomElementFromArray(shobaiTexts),
       byoki: getRandomElementFromArray(byokiTexts),
     };
