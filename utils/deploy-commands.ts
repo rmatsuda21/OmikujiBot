@@ -1,68 +1,137 @@
-import { REST, Routes, SlashCommandBuilder } from "discord.js";
+import {
+  PermissionsBitField,
+  REST,
+  Routes,
+  SlashCommandBuilder,
+} from "discord.js";
 import { config } from "dotenv";
 
 config();
 const { BOT_TOKEN = "", GUILD_ID = "", CLIENT_ID = "" } = process.env;
 
-const commands = [
-  new SlashCommandBuilder()
-    .setName("おみくじ")
-    .setDescription("おみくじを引く！"),
-  new SlashCommandBuilder()
-    .setName("ラッキーアイテム追加")
-    .setDescription("ラッキーアイテムを追加する")
-    .addStringOption((item) =>
-      item
-        .setName("アイテム名")
-        .setDescription("追加したいラッキーアイテムの名前")
-        .setRequired(true)
-    ),
-  new SlashCommandBuilder()
-    .setName("ラッキーカラー追加")
-    .setDescription("ラッキーカラーを追加する")
-    .addStringOption((color) =>
-      color
-        .setName("カラー名")
-        .setDescription("追加したいラッキーカラーの名前")
-        .setRequired(true)
-    ),
-  new SlashCommandBuilder()
-    .setName("ラッキーカラー一覧")
-    .setDescription("ラッキーカラーをすべて見る")
-    .addNumberOption((page) =>
-      page
-        .setName("ページ数")
-        .setDescription("一覧のページ数")
-        .setRequired(true)
-    ),
-  new SlashCommandBuilder()
-    .setName("ラッキーアイテム一覧")
-    .setDescription("ラッキーアイテムをすべて見る")
-    .addNumberOption((item) =>
-      item
-        .setName("ページ数")
-        .setDescription("一覧のページ数")
-        .setRequired(true)
-    ),
-  new SlashCommandBuilder()
-    .setName("ラッキーアイテム消去")
-    .setDescription("指定のラッキーアイテムを消去する")
-    .addStringOption((item) =>
-      item
-        .setName("アイテム名")
-        .setDescription("消去したいアイテムの名前")
-        .setRequired(true)
-    ),
-  new SlashCommandBuilder()
-    .setName("ラッキーカラー消去")
-    .setDescription("指定のラッキーカラーを消去する")
-    .addStringOption((item) =>
-      item
-        .setName("カラー名")
-        .setDescription("消去したいカラーの名前")
-        .setRequired(true)
-    ),
-].map((command) => command.toJSON());
+interface IOption {
+  type: "string" | "number" | "boolean";
+  option_name: string;
+  option_description: string;
+  required: boolean;
+}
+
+interface ICommandMap {
+  names: string[];
+  description: string;
+  options?: IOption[];
+  memberPermission?: bigint;
+}
+
+const commandMaps: ICommandMap[] = [
+  { names: ["おみくじ", "omi", "o"], description: "おみくじを引く！" },
+  { names: ["rank"], description: "ランク一覧を見る！" },
+  { names: ["profile"], description: "自分のプロフィールを見る！" },
+  { names: ["shop"], description: "本音コインでお買い物！" },
+  {
+    names: ["ラッキーアイテム追加"],
+    description: "ラッキーアイテムを追加する",
+    options: [
+      {
+        type: "string",
+        option_name: "アイテム名",
+        option_description: "追加したいラッキーアイテムの名前",
+        required: true,
+      },
+    ],
+    memberPermission: PermissionsBitField.Flags.Administrator,
+  },
+  {
+    names: ["ラッキーカラー追加"],
+    description: "ラッキーカラーを追加する",
+    options: [
+      {
+        type: "string",
+        option_name: "カラー名",
+        option_description: "追加したいラッキーカラーの名前",
+        required: true,
+      },
+    ],
+    memberPermission: PermissionsBitField.Flags.Administrator,
+  },
+  {
+    names: ["ラッキーカラー一覧"],
+    description: "ラッキーカラーをすべて見る",
+    options: [
+      {
+        type: "number",
+        option_name: "ページ数",
+        option_description: "一覧のページ数",
+        required: true,
+      },
+    ],
+    memberPermission: PermissionsBitField.Flags.Administrator,
+  },
+  {
+    names: ["ラッキーアイテム一覧"],
+    description: "ラッキーアイテムをすべて見る",
+    options: [
+      {
+        type: "number",
+        option_name: "ページ数",
+        option_description: "一覧のページ数",
+        required: true,
+      },
+    ],
+    memberPermission: PermissionsBitField.Flags.Administrator,
+  },
+  {
+    names: ["ラッキーアイテム消去"],
+    description: "指定のラッキーアイテムを消去する",
+    options: [
+      {
+        type: "string",
+        option_name: "アイテム名",
+        option_description: "消去したいアイテムの名前",
+        required: true,
+      },
+    ],
+    memberPermission: PermissionsBitField.Flags.Administrator,
+  },
+  {
+    names: ["ラッキーカラー消去"],
+    description: "指定のラッキーカラーを消去する",
+    options: [
+      {
+        type: "string",
+        option_name: "カラー名",
+        option_description: "消去したいカラーの名前",
+        required: true,
+      },
+    ],
+    memberPermission: PermissionsBitField.Flags.Administrator,
+  },
+];
+
+const commands = commandMaps.flatMap(
+  ({ names, description, options, memberPermission }) => {
+    return names.map((name) => {
+      const scb = new SlashCommandBuilder();
+      scb.setName(name);
+      scb.setDescription(description);
+      if (options) {
+        options.forEach((option) => {
+          const func = (item) =>
+            item
+              .setName(option.option_name)
+              .setDescription(option.option_description)
+              .setRequired(option.required);
+
+          if (option.type === "string") scb.addStringOption(func);
+          else if (option.type === "number") scb.addNumberOption(func);
+          else if (option.type === "boolean") scb.addBooleanOption(func);
+        });
+      }
+      if (memberPermission) scb.setDefaultMemberPermissions(memberPermission);
+      return scb.toJSON();
+    });
+  }
+);
 
 const rest = new REST({ version: "10" }).setToken(BOT_TOKEN);
 

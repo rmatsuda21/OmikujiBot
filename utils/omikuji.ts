@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import {
   AttachmentBuilder,
   CacheType,
@@ -6,29 +5,26 @@ import {
   EmbedBuilder,
 } from "discord.js";
 import { createImage } from "./canvas";
-import {
-  getUser,
-  updateUserDrawDate,
-  updateUserDrawDateAndCoins,
-} from "./mongodb";
+import { getUser, updateUserWithDraw } from "./mongodb";
+import moment from "moment-timezone";
 
 const unseiList = [
-  { unsei: "大吉", coin: 6 },
-  { unsei: "吉", coin: 5 },
-  { unsei: "中吉", coin: 4 },
-  { unsei: "小吉", coin: 3 },
-  { unsei: "末吉", coin: 2 },
-  { unsei: "凶", coin: 1 },
-  { unsei: "大凶", coin: 0 },
+  { unsei: "大吉", coin: 6, xp: 4, chance: 6 },
+  { unsei: "吉", coin: 5, xp: 3, chance: 16 },
+  { unsei: "中吉", coin: 4, xp: 3, chance: 22 },
+  { unsei: "小吉", coin: 3, xp: 2, chance: 28 },
+  { unsei: "末吉", coin: 2, xp: 2, chance: 25 },
+  { unsei: "凶", coin: 1, xp: 1, chance: 15 },
+  { unsei: "大凶", coin: 0, xp: 1, chance: 6 },
 ];
 
-// Has the given user already drawn an mikuji today?
+// Has the given user already drawn a mikuji today?
 const hasDrawnToday = async (interaction, user_id): Promise<boolean> => {
   const user = await getUser(user_id);
 
   if (user) {
-    const previousDate = dayjs(user.last_draw);
-    const currentDate = dayjs();
+    const previousDate = moment(user.last_draw);
+    const currentDate = moment();
 
     const hasDrawnToday = currentDate.isSame(previousDate, "day");
 
@@ -39,8 +35,6 @@ const hasDrawnToday = async (interaction, user_id): Promise<boolean> => {
 
       return true;
     }
-
-    await updateUserDrawDate(user_id);
   }
 
   return false;
@@ -52,8 +46,25 @@ export const drawMikuji = async (
   user_icon?: string,
   user_name?: string
 ) => {
-  const { unsei, coin } =
-    unseiList[Math.floor(Math.random() * unseiList.length)];
+  let unseiIndex = 0;
+
+  let chanceSum = 0;
+  const chanceAccum = unseiList.map((unsei) => {
+    chanceSum += unsei.chance;
+    return chanceSum;
+  });
+
+  const randNum = Math.floor(
+    Math.random() * chanceAccum[chanceAccum.length - 1]
+  );
+  for (let i = 0; i < chanceAccum.length; ++i) {
+    if (randNum < chanceAccum[i]) {
+      unseiIndex = i;
+      break;
+    }
+  }
+
+  const { unsei, coin, xp } = unseiList[unseiIndex];
 
   if (process.env.DEV !== "true" && (await hasDrawnToday(interaction, user_id)))
     return;
@@ -74,7 +85,9 @@ export const drawMikuji = async (
       .setTitle(
         `> **今日の運勢**\n` + `> :shinto_shrine: **${unsei}** :shinto_shrine:`
       )
-      .setDescription(`**大人のコイン：** +${coin} :coin:`)
+      .setDescription(
+        `**本音コイン：** +${coin} 🪙\n **大人な経験値：** +${xp} 💠`
+      )
       .setThumbnail("attachment://Icon.png")
       .setImage("attachment://profile-image.png")
       .setTimestamp()
@@ -85,7 +98,7 @@ export const drawMikuji = async (
   ];
 
   try {
-    await updateUserDrawDateAndCoins(user_id, coin);
+    await updateUserWithDraw(user_id, user_name, coin, xp, unsei);
   } catch (err) {
     console.log(err);
   }

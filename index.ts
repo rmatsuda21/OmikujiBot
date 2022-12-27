@@ -1,13 +1,5 @@
 import { config } from "dotenv";
-import {
-  AttachmentBuilder,
-  CacheType,
-  ChatInputCommandInteraction,
-  Client,
-  EmbedBuilder,
-  GatewayIntentBits,
-  PermissionsBitField,
-} from "discord.js";
+import { Client, GatewayIntentBits, PermissionsBitField } from "discord.js";
 import { join } from "path";
 import { GlobalFonts } from "@napi-rs/canvas";
 
@@ -17,13 +9,14 @@ import {
   addItem,
   cleanupDB,
   connectToDB,
-  getColorPaginated,
-  getItemsPaginated,
-  getMaxColorsPageNum,
-  getMaxItemsPageNum,
   removeItem,
   seedDB,
 } from "./utils/mongodb";
+
+import { getLuckyColors, getLuckyItems } from "./utils/utils";
+import { showRank } from "./utils/showRank";
+import { showProfile } from "./utils/showProfile";
+
 var nodeCleanup = require("node-cleanup");
 
 // Setup
@@ -51,7 +44,6 @@ GlobalFonts.registerFromPath(
 
 // Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
-const icon = new AttachmentBuilder("./images/Icon.png");
 
 // When the client is ready, run this code (only once)
 client.once("ready", async () => {
@@ -64,66 +56,6 @@ client.once("ready", async () => {
   console.log("Ready!");
 });
 
-const getLuckyColors = async (
-  interaction: ChatInputCommandInteraction<CacheType>
-) => {
-  let pageNum = interaction.options.getNumber("ページ数");
-  const maxPageNum = await getMaxColorsPageNum();
-  const items = (await getColorPaginated(pageNum)).join("\n");
-
-  await interaction.reply(
-    await getList(
-      interaction,
-      pageNum,
-      maxPageNum,
-      items,
-      "📖 ラッキーカラー一覧"
-    )
-  );
-};
-
-const getLuckyItems = async (
-  interaction: ChatInputCommandInteraction<CacheType>
-) => {
-  let pageNum = interaction.options.getNumber("ページ数");
-  const maxPageNum = await getMaxItemsPageNum();
-  const items = (await getItemsPaginated(pageNum)).join("\n");
-
-  await interaction.reply(
-    await getList(
-      interaction,
-      pageNum,
-      maxPageNum,
-      items,
-      "📖 ラッキーアイテム一覧"
-    )
-  );
-};
-
-const getList = async (
-  interaction: ChatInputCommandInteraction<CacheType>,
-  pageNum: number,
-  maxPageNum: number,
-  items: string,
-  title: string
-) => {
-  if (pageNum <= 0) pageNum = 1;
-  if (pageNum > maxPageNum) pageNum = maxPageNum;
-
-  const embeds = [
-    new EmbedBuilder()
-      .setAuthor({
-        name: title,
-        iconURL: interaction.guild.iconURL(),
-      })
-      .setTitle(`ページ：【 ${pageNum} / ${maxPageNum} 】`)
-      .setThumbnail("attachment://Icon.png")
-      .setColor("#c92626")
-      .setDescription("```\n" + items + "```"),
-  ];
-
-  return { embeds, files: [icon] };
-};
 // Wait for interaction
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
@@ -139,7 +71,15 @@ client.on("interactionCreate", async (interaction) => {
 
   switch (commandName) {
     case "おみくじ":
-      drawMikuji(interaction, id, avatarURL, username);
+    case "omi":
+    case "o":
+      await drawMikuji(interaction, id, avatarURL, username);
+      break;
+    case "rank":
+      await showRank(interaction);
+      break;
+    case "profile":
+      await showProfile(interaction, id, username, avatarURL);
       break;
     case "ラッキーカラー追加":
       if (!isAdmin) {

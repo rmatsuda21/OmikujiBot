@@ -13,9 +13,9 @@
   "license": "ISC",
   "dependencies": {
     "@napi-rs/canvas": "^0.1.30",
-    "dayjs": "^1.11.5",
     "discord.js": "^14.5.0",
     "dotenv": "^16.0.3",
+    "moment-timezone": "^0.5.40",
     "mongodb": "4.10",
     "node-cleanup": "^2.1.2",
     "reflect-metadata": "^0.1.13",
@@ -28,6 +28,5 @@
     "@types/node": "^18.8.1",
     "@types/validator": "^13.7.7",
     "eslint": "^8.24.0"
-  },
-  "type": "module"
+  }
 }

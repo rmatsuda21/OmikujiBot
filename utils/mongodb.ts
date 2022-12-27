@@ -4,12 +4,13 @@ import {
   Document,
   Collection,
   Db,
-  WithId,
 } from "mongodb";
 import { config } from "dotenv";
-import dayjs from "dayjs";
 import { getRandomElementFromArray } from "./getRandomElementFromArray";
+import { timezone } from "../constants/consts";
 
+import moment from "moment-timezone";
+moment.tz.setDefault(timezone);
 config();
 
 const uri = `mongodb+srv://omikuji:${process.env.MONGO_PASS}@omikuji.i3vrflb.mongodb.net/?retryWrites=true&w=majority`;
@@ -183,6 +184,32 @@ export const getAllItems = async () => {
   }
 };
 
+export const getTopUsers = async () => {
+  try {
+    return await usersCol.find().sort({ xp: -1 }).toArray();
+  } catch (err) {
+    throw "Error: (getTopUsers)";
+  }
+};
+
+export const getTopUsersPaginated = async (page_num = 1) => {
+  const PAGE_SIZE = 10;
+  const MAX_PAGE = Math.ceil((await usersCol.estimatedDocumentCount()) / 10);
+
+  if (page_num > MAX_PAGE) page_num = MAX_PAGE;
+
+  try {
+    return await usersCol
+      .find()
+      .sort({ xp: -1 })
+      .skip(page_num > 0 ? PAGE_SIZE * (page_num - 1) : 0)
+      .limit(PAGE_SIZE)
+      .toArray();
+  } catch (err) {
+    throw "Error: (getTopUsers)";
+  }
+};
+
 export const getItemsPaginated = async (page_num = 1) => {
   try {
     return (
@@ -233,30 +260,36 @@ export const removeColor = async (color: string) => {
   }
 };
 
-export const updateUserDrawDateAndCoins = async (
+export const updateUserWithDraw = async (
   user_id: string,
-  coins: number
+  user_name: string,
+  coins: number,
+  xp: number,
+  unsei: string
 ) => {
   try {
-    const res = await usersCol.findOneAndUpdate(
+    await usersCol.findOneAndUpdate(
       { userId: user_id },
       {
-        $inc: { coins },
-        $set: { last_draw: dayjs().toString() },
+        $inc: { coins, xp, [unsei]: 1, totalOmikuji: 1 },
+        $set: { last_draw: moment().toISOString(), user_name },
       },
       { upsert: true }
     );
   } catch (err) {
     console.log(err);
-    throw "Error: (updateUserDrawDate)";
+    throw "Error: (updateUserDrawDateAndCoins)";
   }
 };
 
 export const updateUserDrawDate = async (user_id: string) => {
   try {
-    const res = await usersCol.findOneAndUpdate(
+    await usersCol.findOneAndUpdate(
       { userId: user_id },
-      { $set: { last_draw: dayjs().toString() }, $setOnInsert: { coins: 0 } },
+      {
+        $set: { last_draw: moment().toISOString() },
+        $setOnInsert: { coins: 0 },
+      },
       { upsert: true }
     );
   } catch (err) {
@@ -266,7 +299,7 @@ export const updateUserDrawDate = async (user_id: string) => {
 
 export const updateUserCoins = async (user_id: string, coins: number) => {
   try {
-    const res = await usersCol.findOneAndUpdate(
+    await usersCol.findOneAndUpdate(
       { userId: user_id },
       { $inc: { coins } },
       { upsert: true }

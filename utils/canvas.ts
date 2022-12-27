@@ -77,6 +77,22 @@ const drawVerticalText = (
       continue;
     }
 
+    if (currChar === "、") {
+      drawText(
+        currChar,
+        newX,
+        y +
+          ctx.measureText(currChar).width * offset +
+          2 * offset -
+          fontSize * 0.6,
+        fontSize,
+        "BLACK",
+        fillSyle
+      );
+      offset += 0.4;
+      continue;
+    }
+
     drawText(
       currChar,
       newX,
@@ -118,7 +134,25 @@ const drawText = (
   ctx.fillStyle = fillSyle;
 
   let newX = leftAlign ? x : x - ctx.measureText(text).width / 2;
-  ctx.fillText(text, newX, y + fontSize / 2);
+  let newY = y + fontSize / 2;
+
+  const xOffset = 6;
+  const yOffset = -5;
+  if (text === "（" || text === "）") {
+    ctx.translate(newX + xOffset, newY + yOffset);
+    if (text === "（") ctx.rotate(Math.PI / 2);
+    if (text === "）") ctx.rotate(Math.PI / 2);
+    ctx.translate(-(newX + xOffset), -(newY + yOffset));
+  }
+
+  ctx.fillText(text, newX, newY);
+
+  if (text === "（" || text === "）") {
+    ctx.translate(newX + xOffset, newY + yOffset);
+    if (text === "（") ctx.rotate(-Math.PI / 2);
+    if (text === "）") ctx.rotate(-Math.PI / 2);
+    ctx.translate(-(newX + xOffset), -(newY + yOffset));
+  }
 };
 
 const drawCircle = (
@@ -165,7 +199,7 @@ export const createImage = async (unsei: string) => {
 
     // Header
     const subtext = await getRandomSubtext();
-    drawText(subtext, width / 2, 210, 16, "BLACK", COLORS.BLACK);
+    drawText(subtext, width / 2, 210, 12, "BLACK", COLORS.BLACK);
     drawText(unsei, width / 2, 245, 45, "BLACK", COLORS.RED);
 
     // Mid
